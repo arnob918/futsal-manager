@@ -22,7 +22,7 @@ export default async function Dashboard() {
       <div>
         <h2 className="font-semibold mb-2">Upcoming matches</h2>
         <ul className="list-disc ml-5">
-          {upcoming.map((m) => (
+          {upcoming.map((m: any) => (
             <li key={m.id}>
               {m.date.toLocaleString()} {m.location ? `– ${m.location}` : ""}
             </li>

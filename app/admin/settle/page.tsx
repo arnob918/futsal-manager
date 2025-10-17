@@ -21,7 +21,7 @@ export default async function SettlePage() {
       <form action={action} className="space-y-2">
         <label>Match</label>
         <select className="border px-2 py-2 w-full" name="matchId" required>
-          {matches.map((m) => (
+          {matches.map((m: any) => (
             <option key={m.id} value={m.id}>
               {m.date.toLocaleString()} {m.location ? `– ${m.location}` : ""}
             </option>

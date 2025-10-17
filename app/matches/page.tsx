@@ -8,7 +8,7 @@ export default async function Matches() {
     <div className="space-y-3">
       <h1 className="text-2xl font-semibold">Matches</h1>
       <div className="space-y-2">
-        {matches.map((m) => (
+        {matches.map((m: any) => (
           <div key={m.id} className="border rounded p-3">
             <div>
               <b>{m.date.toLocaleString()}</b>{" "}

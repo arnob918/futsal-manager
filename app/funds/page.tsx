@@ -40,7 +40,7 @@ export default async function Funds() {
       <div>
         <h2 className="font-semibold mb-2">My requests</h2>
         <ul className="space-y-2">
-          {requests.map((r) => (
+          {requests.map((r: any) => (
             <li key={r.id} className="border rounded p-2 flex justify-between">
               <span>
                 {(r.amount / 100).toFixed(2)} – {r.status}
