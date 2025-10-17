@@ -26,7 +26,7 @@ export async function settleMatch(
   participantIds: string[]
 ) {
   await adminGuard();
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx: any) => {
     const match = await tx.match.findUnique({
       where: { id: matchId },
       include: { participants: true },
