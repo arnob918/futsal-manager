@@ -27,7 +27,7 @@ export default async function AdminFunds() {
         <p>No pending requests</p>
       ) : (
         <ul className="space-y-2">
-          {pending.map((r) => (
+          {pending.map((r: any) => (
             <li
               key={r.id}
               className="border rounded p-3 flex items-center justify-between"
