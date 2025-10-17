@@ -39,7 +39,7 @@ export default async function SettlePage() {
 
         <label>Participants</label>
         <div className="grid grid-cols-2 gap-2">
-          {users.map((u) => (
+          {users.map((u: any) => (
             <label
               key={u.id}
               className="border rounded p-2 flex items-center gap-2"
