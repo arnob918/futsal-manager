@@ -1,0 +1,112 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TxKind {
+  GENERIC
+  FUND_TOPUP
+  MATCH_PAYER_CREDIT
+  MATCH_PARTICIPANT_DEBIT
+}
+
+enum FundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id             String            @id @default(cuid())
+  createdAt      DateTime          @default(now())
+  email          String            @unique
+  name           String?
+  role           Role              @default(USER)
+  passwordHash   String
+  balance   Int      @default(0)
+
+  // relations
+  transactions   Transaction[]
+  fundRequests   FundRequest[]
+  matchesHosted  Match[]           @relation("MatchPayer")
+  participations MatchParticipant[]
+
+  @@index([role])
+  @@index([createdAt])
+}
+
+model Match {
+  id            String             @id @default(cuid())
+  createdAt     DateTime           @default(now())
+  date          DateTime
+  location      String?
+  totalCost     Int                @default(0) // 
+  payerId       String?            // user who paid upfront
+  settled       Boolean            @default(false)
+
+  // relations
+  payer         User?              @relation("MatchPayer", fields: [payerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  participants  MatchParticipant[] 
+  transactions  Transaction[]      
+
+  @@index([date])
+  @@index([payerId])
+  @@index([settled])
+}
+
+model MatchParticipant {
+  id       String  @id @default(cuid())
+  matchId  String
+  userId   String
+
+  match    Match   @relation(fields: [matchId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([matchId, userId])
+  @@index([userId])
+  @@index([matchId])
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  amount    Int                  // ; +credit, -debit
+  memo      String?
+  matchId   String?
+  kind      TxKind   @default(GENERIC)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  match     Match?   @relation(fields: [matchId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([userId])
+  @@index([matchId])
+  @@index([createdAt])
+  @@index([kind])
+}
+
+model FundRequest {
+  id        String      @id @default(cuid())
+  createdAt DateTime    @default(now())
+  userId    String
+  amount    Int         // 
+  status    FundStatus  @default(PENDING)
+  note      String?
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
