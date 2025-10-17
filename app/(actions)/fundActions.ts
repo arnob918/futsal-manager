@@ -16,7 +16,7 @@ export async function approveFund(reqId: string) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as any).role !== "ADMIN")
     throw new Error("Unauthorized");
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx: any) => {
     const fr = await tx.fundRequest.update({
       where: { id: reqId },
       data: { status: "APPROVED" },
