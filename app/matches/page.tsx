@@ -15,8 +15,7 @@ export default async function Matches() {
               {m.location ? `– ${m.location}` : ""}
             </div>
             <div>
-              Total: {(m.totalCost ?? 0) / 100} • Settled:{" "}
-              {m.settled ? "Yes" : "No"}
+              Total: {m.totalCost ?? 0} • Settled: {m.settled ? "Yes" : "No"}
             </div>
           </div>
         ))}

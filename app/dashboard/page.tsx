@@ -17,7 +17,7 @@ export default async function Dashboard() {
         Welcome{user?.name ? `, ${user.name}` : ""}
       </h1>
       <div className="border rounded p-3">
-        Current balance: <b>{(user?.balance ?? 0) / 100} USD</b>
+        Current balance: <b>{user?.balance ?? 0} BDT</b>
       </div>
       <div>
         <h2 className="font-semibold mb-2">Upcoming matches</h2>

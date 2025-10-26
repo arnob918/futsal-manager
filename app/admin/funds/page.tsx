@@ -34,7 +34,7 @@ export default async function AdminFunds() {
             >
               <div>
                 <div>
-                  <b>{r.user.name}</b> – {(r.amount / 100).toFixed(2)} USD
+                  <b>{r.user.name}</b> – {r.amount.toFixed(2)} BDT
                 </div>
                 <div className="text-sm text-gray-500">{r.note}</div>
               </div>

@@ -9,8 +9,8 @@ export default async function SettlePage() {
     "use server";
     const matchId = formData.get("matchId") as string;
     const payerId = formData.get("payerId") as string;
-    const totalUSD = Number(formData.get("totalUSD"));
-    const total = Math.round(totalUSD * 100);
+    const totalBDT = Number(formData.get("totalBDT"));
+    const total = Math.round(totalBDT);
     const participantIds = formData.getAll("participants") as string[];
     await settleMatch(matchId, total, participantIds);
   }
@@ -31,7 +31,7 @@ export default async function SettlePage() {
         <label>Total Cost</label>
         <input
           className="border px-3 py-2 w-full"
-          name="totalUSD"
+          name="totalBDT"
           type="number"
           step="0.01"
           required
