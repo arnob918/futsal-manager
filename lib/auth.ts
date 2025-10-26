@@ -1,62 +1,30 @@
-import Credentials from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import type { NextAuthOptions } from "next-auth";
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
-import { z } from "zod";
-
-const prisma = new PrismaClient();
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { prisma } from "@/lib/db"; // your Prisma singleton
 
 export const authOptions: NextAuthOptions = {
-  session: { strategy: "jwt" },
+  adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" }, // or "database" if you prefer DB sessions
   providers: [
-    Credentials({
-      name: "Credentials",
-      credentials: { email: {}, password: {} },
-      async authorize(raw) {
-        const parsed = z
-          .object({
-            email: z.string().email(),
-            password: z.string().min(6),
-          })
-          .safeParse(raw);
-        if (!parsed.success) {
-          console.log("authorize: zod failed", parsed.error?.issues);
-          return null;
-        }
-
-        const email = parsed.data.email.trim().toLowerCase();
-        const password = parsed.data.password;
-
-        const user = await prisma.user.findFirst({
-          where: { email: { equals: email, mode: "insensitive" } },
-        });
-        if (!user) {
-          console.log("authorize: user not found");
-          return null;
-        }
-        if (!user.passwordHash) {
-          console.log("authorize: no passwordHash");
-          return null;
-        }
-
-        const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) {
-          console.log("authorize: bad password");
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        } as any;
-      },
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // optional: limit to specific hosted domain
+      // authorization: { params: { hd: "yourdomain.com" } },
     }),
   ],
+  pages: {
+    signIn: "/signin", // custom page (optional)
+  },
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.role = (user as any).role;
+    async jwt({ token, user, account, profile }) {
+      // On first sign-in, NextAuth creates a User row via adapter. Your `role` default=USER will apply.
+      // Attach role to token for easy checks
+      if (user) {
+        const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+        if (dbUser) token.role = dbUser.role;
+      }
       return token;
     },
     async session({ session, token }) {
@@ -64,6 +32,9 @@ export const authOptions: NextAuthOptions = {
       (session.user as any).role = token.role;
       return session;
     },
+    // Optional: block non-Google logins (defense-in-depth)
+    async signIn({ account }) {
+      return account?.provider === "google";
+    },
   },
-  pages: { signIn: "/signin" },
 };
