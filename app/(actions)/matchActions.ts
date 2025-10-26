@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { z } from "zod";
+import { sendMatchSettledEmail } from "@/lib/email";
 
 const adminGuard = async () => {
   const session = await getServerSession(authOptions);
@@ -22,60 +22,92 @@ export async function createMatch(formData: FormData) {
 
 export async function settleMatch(
   matchId: string,
-  totalCost: number,
+  totalCostCents: number,
   participantIds: string[]
 ) {
   await adminGuard();
-  return await prisma.$transaction(async (tx: any) => {
-    const match = await tx.match.findUnique({
-      where: { id: matchId },
-      include: { participants: true },
-    });
-    if (!match) throw new Error("Match not found");
 
-    const n = participantIds.length;
-    if (n === 0) throw new Error("No participants");
-    const share = Math.round(totalCost / n);
-
-    // Update match metadata
-    await tx.match.update({
-      where: { id: matchId },
-      data: { totalCost: totalCost, settled: true },
-    });
-
-    // Ensure participant rows exist
-    for (const uid of participantIds) {
-      await tx.matchParticipant.upsert({
-        where: { matchId_userId: { matchId, userId: uid } },
-        create: { matchId, userId: uid },
-        update: {},
+  // Do all DB work atomically first
+  const { match, share, participants } = await prisma.$transaction(
+    async (tx) => {
+      const m = await tx.match.findUnique({
+        where: { id: matchId },
+        include: { participants: true },
       });
+      if (!m) throw new Error("Match not found");
+      if (participantIds.length === 0) throw new Error("No participants");
+
+      const perShare = Math.round(totalCostCents / participantIds.length);
+
+      // Update match
+      await tx.match.update({
+        where: { id: matchId },
+        data: { totalCost: totalCostCents, settled: true },
+      });
+
+      // Ensure participant rows exist
+      for (const uid of participantIds) {
+        await tx.matchParticipant.upsert({
+          where: { matchId_userId: { matchId, userId: uid } },
+          create: { matchId, userId: uid },
+          update: {},
+        });
+      }
+
+      // Debit participants with their share
+      for (const uid of participantIds) {
+        await tx.transaction.create({
+          data: {
+            userId: uid,
+            amount: -perShare,
+            memo: `Share for match ${matchId}`,
+            kind: "MATCH_PARTICIPANT_DEBIT",
+            matchId,
+          },
+        });
+      }
+
+      // Refresh cached balances (optional)
+      const affected = Array.from(new Set([...participantIds]));
+      for (const uid of affected) {
+        const sum = await tx.transaction.aggregate({
+          _sum: { amount: true },
+          where: { userId: uid },
+        });
+        await tx.user.update({
+          where: { id: uid },
+          data: { balance: sum._sum.amount ?? 0 },
+        });
+      }
+
+      // Fetch emails & names for notifications (outside of the looped writes)
+      const users = await tx.user.findMany({
+        where: { id: { in: participantIds } },
+        select: { id: true, email: true, name: true },
+      });
+
+      return {
+        match: m,
+        share: perShare,
+        participants: users,
+      };
     }
+  );
 
-    // Debit each participant with their share
-    for (const uid of participantIds) {
-      await tx.transaction.create({
-        data: {
-          userId: uid,
-          amount: -share,
-          memo: `Share for match ${matchId}`,
-          kind: "MATCH_PARTICIPANT_DEBIT",
-          matchId,
-        },
-      });
-    }
-
-    // Optional: refresh cached balances
-    const affected = Array.from(new Set([...participantIds]));
-    for (const uid of affected) {
-      const sum = await tx.transaction.aggregate({
-        _sum: { amount: true },
-        where: { userId: uid },
-      });
-      await tx.user.update({
-        where: { id: uid },
-        data: { balance: sum._sum.amount ?? 0 },
-      });
-    }
-  });
+  // Send emails AFTER the transaction (don’t block/taint the commit if email fails)
+  // Fire-and-forget style with logging; do not throw if one email fails
+  await Promise.allSettled(
+    participants.map((u) =>
+      u.email
+        ? sendMatchSettledEmail({
+            to: u.email,
+            playerName: u.name,
+            matchDate: match.date,
+            location: match.location,
+            shareCents: share,
+            totalCents: totalCostCents,
+          })
+        : Promise.resolve()
+    )
+  );
 }
