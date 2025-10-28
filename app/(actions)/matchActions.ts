@@ -27,9 +27,12 @@ export async function settleMatch(
 ) {
   await adminGuard();
 
+  // Import Prisma for transaction isolation level
+  const { Prisma } = require("@prisma/client");
+
   // Do all DB work atomically first
   const { match, share, participants } = await prisma.$transaction(
-    async (tx) => {
+    async (tx: any) => {
       const m = await tx.match.findUnique({
         where: { id: matchId },
         include: { participants: true },
@@ -45,40 +48,46 @@ export async function settleMatch(
         data: { totalCost: totalCostCents, settled: true },
       });
 
-      // Ensure participant rows exist
-      for (const uid of participantIds) {
-        await tx.matchParticipant.upsert({
-          where: { matchId_userId: { matchId, userId: uid } },
-          create: { matchId, userId: uid },
-          update: {},
-        });
-      }
+      // Ensure participant rows exist - use Promise.all for batch operations
+      await Promise.all(
+        participantIds.map((uid) =>
+          tx.matchParticipant.upsert({
+            where: { matchId_userId: { matchId, userId: uid } },
+            create: { matchId, userId: uid },
+            update: {},
+          })
+        )
+      );
 
-      // Debit participants with their share
-      for (const uid of participantIds) {
-        await tx.transaction.create({
-          data: {
-            userId: uid,
-            amount: -perShare,
-            memo: `Share for match ${matchId}`,
-            kind: "MATCH_PARTICIPANT_DEBIT",
-            matchId,
-          },
-        });
-      }
+      // Debit participants with their share - use Promise.all for batch operations
+      await Promise.all(
+        participantIds.map((uid) =>
+          tx.transaction.create({
+            data: {
+              userId: uid,
+              amount: -perShare,
+              memo: `Share for match ${matchId}`,
+              kind: "MATCH_PARTICIPANT_DEBIT",
+              matchId,
+            },
+          })
+        )
+      );
 
-      // Refresh cached balances (optional)
+      // Refresh cached balances - use Promise.all for batch operations
       const affected = Array.from(new Set([...participantIds]));
-      for (const uid of affected) {
-        const sum = await tx.transaction.aggregate({
-          _sum: { amount: true },
-          where: { userId: uid },
-        });
-        await tx.user.update({
-          where: { id: uid },
-          data: { balance: sum._sum.amount ?? 0 },
-        });
-      }
+      const balanceUpdates = await Promise.all(
+        affected.map(async (uid) => {
+          const sum = await tx.transaction.aggregate({
+            _sum: { amount: true },
+            where: { userId: uid },
+          });
+          return tx.user.update({
+            where: { id: uid },
+            data: { balance: sum._sum.amount ?? 0 },
+          });
+        })
+      );
 
       // Fetch emails & names for notifications (outside of the looped writes)
       const users = await tx.user.findMany({
@@ -91,13 +100,18 @@ export async function settleMatch(
         share: perShare,
         participants: users,
       };
+    },
+    {
+      maxWait: 5000, // 5s max wait time
+      timeout: 10000, // 10s timeout
+      isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, // Less strict isolation level
     }
   );
 
-  // Send emails AFTER the transaction (don’t block/taint the commit if email fails)
+  // Send emails AFTER the transaction (don't block/taint the commit if email fails)
   // Fire-and-forget style with logging; do not throw if one email fails
   await Promise.allSettled(
-    participants.map((u) =>
+    participants.map((u: any) =>
       u.email
         ? sendMatchSettledEmail({
             to: u.email,
@@ -106,6 +120,9 @@ export async function settleMatch(
             location: match.location,
             shareCents: share,
             totalCents: totalCostCents,
+          }).catch((error) => {
+            console.error(`Failed to send email to ${u.email}:`, error);
+            return null; // Prevent the promise from rejecting
           })
         : Promise.resolve()
     )
