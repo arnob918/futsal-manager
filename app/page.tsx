@@ -3,12 +3,24 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Dashboard from "./dashboard/page";
 import SignIn from "./signin/page";
+import { prisma } from "@/lib/db";
+import Admin from "./admin/page";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
+  if (!session) return <SignIn />;
+
+  const userId = (session.user as any)?.id as string;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, name: true },
+  });
 
   // If the user is signed in, reuse the dashboard page so the homepage shows the same content.
-  if (session) {
+  if (user?.role === "ADMIN") {
+    return <Admin />;
+  } else if (session) {
     return <Dashboard />;
   }
   return <SignIn />;
