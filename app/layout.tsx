@@ -45,14 +45,6 @@ export default async function RootLayout({
                   Funds
                 </Link>
               )}
-              {role === "ADMIN" && (
-                <Link
-                  href="/admin"
-                  className=" hover:text-blue-600 transition-colors"
-                >
-                  Admin
-                </Link>
-              )}
 
               {/* Mobile menu */}
               {/* <div className="sm:hidden ml-auto relative group">
