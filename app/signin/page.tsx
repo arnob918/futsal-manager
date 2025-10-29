@@ -14,7 +14,7 @@ export default function SignIn() {
               Penalty Merchants
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
-              The field where football turns into brotherhood.
+              The field where football meets brotherhood.
             </p>
           </div>
 
