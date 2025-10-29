@@ -32,34 +32,30 @@ export default async function RootLayout({
           {session ? (
             <>
               <Link
-                href="/dashboard"
-                className="hidden sm:block hover:text-blue-600 transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
                 href="/matches"
-                className="hidden sm:block hover:text-blue-600 transition-colors"
+                className=" hover:text-blue-600 transition-colors"
               >
                 Matches
               </Link>
-              <Link
-                href="/funds"
-                className="hidden sm:block hover:text-blue-600 transition-colors"
-              >
-                Funds
-              </Link>
+              {role !== "ADMIN" && (
+                <Link
+                  href="/funds"
+                  className=" hover:text-blue-600 transition-colors"
+                >
+                  Funds
+                </Link>
+              )}
               {role === "ADMIN" && (
                 <Link
                   href="/admin"
-                  className="hidden sm:block hover:text-blue-600 transition-colors"
+                  className=" hover:text-blue-600 transition-colors"
                 >
                   Admin
                 </Link>
               )}
 
               {/* Mobile menu */}
-              <div className="sm:hidden ml-auto relative group">
+              {/* <div className="sm:hidden ml-auto relative group">
                 <button className="px-3 py-1 border rounded hover:bg-gray-50">
                   Menu
                 </button>
@@ -91,7 +87,7 @@ export default async function RootLayout({
                     </Link>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               {/* Profile dropdown */}
               <div className="ml-auto sm:ml-auto relative group">

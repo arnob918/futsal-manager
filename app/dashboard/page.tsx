@@ -40,9 +40,6 @@ export default async function Dashboard() {
   const pastMatches = await prisma.match.findMany({
     where: {
       date: { lt: new Date() },
-      participants: {
-        some: { userId },
-      },
     },
     orderBy: { date: "desc" },
     take: 10,
@@ -88,9 +85,9 @@ export default async function Dashboard() {
         </div>
 
         {/* Two Column Layout for Matches */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-start">
           {/* Upcoming Matches */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-fit">
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-600" />
@@ -181,7 +178,7 @@ export default async function Dashboard() {
           </div>
 
           {/* Match History */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-fit">
             <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-purple-600" />
@@ -215,7 +212,11 @@ export default async function Dashboard() {
                     return (
                       <div
                         key={match.id}
-                        className="border border-slate-200 rounded-lg p-3 hover:shadow-md transition-all bg-white"
+                        className={`border rounded-lg p-3 hover:shadow-md transition-all ${
+                          participated
+                            ? "border-slate-200 bg-white"
+                            : "border-slate-200 bg-slate-50/50"
+                        }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="space-y-1 flex-1 min-w-0">
@@ -249,25 +250,31 @@ export default async function Dashboard() {
                             </div>
                           </div>
                           <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                            {participated && (
-                              <div className="text-right">
-                                <p className="text-xs text-slate-500">
-                                  Your Share
-                                </p>
-                                <p className="text-sm font-bold text-emerald-600">
-                                  {costPerPerson} BDT
-                                </p>
-                              </div>
-                            )}
-                            {match.settled ? (
-                              <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Settled
-                              </span>
+                            {participated ? (
+                              <>
+                                <div className="text-right">
+                                  <p className="text-xs text-slate-500">
+                                    Your Share
+                                  </p>
+                                  <p className="text-sm font-bold text-emerald-600">
+                                    {costPerPerson} BDT
+                                  </p>
+                                </div>
+                                {match.settled ? (
+                                  <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    Settled
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                                    <Clock className="w-3 h-3" />
+                                    Pending
+                                  </span>
+                                )}
+                              </>
                             ) : (
-                              <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                                <Clock className="w-3 h-3" />
-                                Pending
+                              <span className="inline-flex items-center gap-1 bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium">
+                                Not Participated
                               </span>
                             )}
                           </div>

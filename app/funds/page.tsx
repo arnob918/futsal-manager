@@ -1,57 +1,54 @@
+// app/(dashboard)/funds/page.tsx
 import { requestFund } from "@/app/(actions)/fundActions";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import FundsView from "./FundsView";
+import { revalidatePath } from "next/cache";
+
+const CHANNELS = ["Bank", "Bkash", "Rocket", "Nagad", "Other"] as const;
 
 export default async function Funds() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
+
   const requests = await prisma.fundRequest.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
   });
+
+  const initialRequests = requests.map((r) => ({
+    ...r,
+    createdAt: r.createdAt.toISOString(),
+  }));
+
   async function action(formData: FormData) {
     "use server";
-    const amt = Number(formData.get("amount"));
-    const note = (formData.get("note") as string) || undefined;
-    await requestFund(amt, note);
+    const amount = Number(formData.get("amount"));
+    const channel = String(formData.get("channel"));
+    const userNoteRaw = (formData.get("userNote") as string) || "";
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error("Please enter a valid positive amount.");
+    }
+    if (!CHANNELS.includes(channel as any)) {
+      throw new Error("Please select a valid payment method.");
+    }
+
+    const builtNote = userNoteRaw ? `${channel} — ${userNoteRaw}` : channel;
+
+    await requestFund(amount, builtNote);
+
+    // ✅ Ensure UI refreshes with the new request
+    revalidatePath("/funds");
+    return { ok: true };
   }
+
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Add funds</h1>
-      <form action={action} className="space-y-2">
-        <input
-          className="border px-3 py-2 w-full"
-          name="amount"
-          placeholder="Amount (BDT)"
-          type="number"
-          step="0.01"
-          required
-        />
-        <textarea
-          className="border px-3 py-2 w-full"
-          name="note"
-          placeholder="Optional note"
-        ></textarea>
-        <button className="px-3 py-2 border rounded" type="submit">
-          Request
-        </button>
-      </form>
-      <div>
-        <h2 className="font-semibold mb-2">My requests</h2>
-        <ul className="space-y-2">
-          {requests.map((r: any) => (
-            <li key={r.id} className="border rounded p-2 flex justify-between">
-              <span>
-                {r.amount.toFixed(2)} – {r.status}
-              </span>
-              <span className="text-sm text-gray-500">
-                {r.createdAt.toLocaleString()}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+    <FundsView
+      action={action}
+      initialRequests={initialRequests}
+      channels={[...CHANNELS]}
+    />
   );
 }
