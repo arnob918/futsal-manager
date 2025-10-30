@@ -7,6 +7,16 @@ import { authOptions } from "@/lib/auth";
 import Image from "next/image";
 import SignInButton from "./signin/sign-in-btn";
 
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Penalty Marchants",
+  description: "Manage your futsal matches and funds easily.",
+  icons: {
+    icon: "/favicon.png",
+  },
+};
+
 const inter = Inter({ subsets: ["latin"] });
 
 export default async function RootLayout({
