@@ -3,8 +3,15 @@ import { prisma } from "@/lib/db";
 import { settleMatch } from "@/app/(actions)/matchActions";
 import { revalidatePath } from "next/cache";
 import SettleForm from "./SettleForm";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function SettlePage() {
+  const session = await getServerSession(authOptions);
+  if (!session || (session.user as any).role !== "ADMIN") {
+    redirect("/");
+  }
   const now = new Date();
 
   // Only past matches, newest → oldest

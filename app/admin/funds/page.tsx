@@ -2,8 +2,16 @@ import Image from "next/image";
 import ActionButtons from "./ActionButtons";
 import { prisma } from "@/lib/db";
 import { approveFund, rejectFund } from "@/app/(actions)/fundActions";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function AdminFunds() {
+  const session = await getServerSession(authOptions);
+  if (!session || (session.user as any).role !== "ADMIN") {
+    redirect("/");
+  }
+
   const pending = await prisma.fundRequest.findMany({
     where: { status: "PENDING" },
     include: { user: true },
