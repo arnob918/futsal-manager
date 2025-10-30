@@ -55,7 +55,7 @@ export default async function Dashboard() {
     user?.participations.map((p) => p.matchId) || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8 mt-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-slate-200">
@@ -68,7 +68,13 @@ export default async function Dashboard() {
         </div>
 
         {/* Balance Card */}
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-lg p-6 md:p-8 text-white">
+        <div
+          className={`bg-gradient-to-br ${
+            user?.balance && user?.balance < 0
+              ? "from-rose-400 to-rose-500"
+              : "from-emerald-500 to-emerald-600"
+          } rounded-2xl shadow-lg p-6 md:p-8 text-white`}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-emerald-100 text-sm font-medium mb-1">
