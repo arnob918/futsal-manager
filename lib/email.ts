@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "arnob.develop@gmail.com",
+    user: process.env.EMAIL_ADDRESS,
     pass: process.env.APP_PASSWORD, // create in Google Account → Security → App passwords
   },
 });
@@ -53,7 +53,9 @@ export async function sendMatchSettledEmail(opts: {
         <ul style="padding-left:20px;">
           <li style="margin-bottom:10px;">Total cost: <b style="color:#e53935;">${total}</b></li>
           <li style="margin-bottom:10px;">Your share: <b style="color:#e53935;">${share}</b></li>
-          <li style="margin-bottom:10px;">Players: <b>${playerCount ?? "Multiple"}</b></li>
+          <li style="margin-bottom:10px;">Players: <b>${
+            playerCount ?? "Multiple"
+          }</b></li>
           <li style="margin-bottom:10px;">Your new balance: <b style="color:#4CAF50;">${formattedBalance}</b></li>
         </ul>
       </div>
