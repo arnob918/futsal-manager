@@ -52,13 +52,13 @@ function getInitials(name?: string | null) {
 }
 
 function prettyDateTime(d: Date) {
-  const datePart = new Intl.DateTimeFormat("en-GB", {
+  const datePart = new Intl.DateTimeFormat("en-BD", {
     weekday: "short",
     day: "2-digit",
     month: "short",
     year: "numeric",
   }).format(d);
-  const timePart = new Intl.DateTimeFormat("en-GB", {
+  const timePart = new Intl.DateTimeFormat("en-BD", {
     hour: "2-digit",
     minute: "2-digit",
   }).format(d);
