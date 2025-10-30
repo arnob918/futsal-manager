@@ -9,10 +9,12 @@ export default async function Matches() {
   });
 
   // Serialize Date for client component
+  console.log("match", matches[0]);
   const initialMatches = matches.map((m) => ({
     ...m,
     date: m.date.toISOString(),
   }));
+  console.log("initialmatch", initialMatches[0]);
 
   return <MatchesView initialMatches={initialMatches} />;
 }
