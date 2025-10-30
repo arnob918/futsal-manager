@@ -90,15 +90,15 @@ export async function settleMatch(
       );
 
       // Fetch emails & names for notifications (outside of the looped writes)
-      const users = await tx.user.findMany({
+      const usersWithUpdatedBalance = await tx.user.findMany({
         where: { id: { in: participantIds } },
-        select: { id: true, email: true, name: true },
+        select: { id: true, email: true, name: true, balance: true },
       });
 
       return {
         match: m,
         share: perShare,
-        participants: users,
+        participants: usersWithUpdatedBalance,
       };
     },
     {
@@ -121,6 +121,7 @@ export async function settleMatch(
             shareCents: share,
             totalCents: totalCostCents,
             playerCount: participantIds.length,
+            updatedBalance: u.balance, // Pass the updated balance here
           }).catch((error) => {
             console.error(`Failed to send email to ${u.email}:`, error);
             return null; // Prevent the promise from rejecting

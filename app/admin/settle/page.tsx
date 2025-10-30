@@ -16,7 +16,7 @@ export default async function SettlePage() {
 
   // Only past matches, newest → oldest
   const matches = await prisma.match.findMany({
-    where: { date: { lt: now } },
+    where: { date: { lt: now }, settled: false },
     orderBy: { date: "desc" },
     select: {
       id: true,

@@ -16,6 +16,7 @@ export async function sendMatchSettledEmail(opts: {
   shareCents: number;
   totalCents: number;
   playerCount: number;
+  updatedBalance: number;
 }) {
   const {
     to,
@@ -25,12 +26,18 @@ export async function sendMatchSettledEmail(opts: {
     shareCents,
     totalCents,
     playerCount,
+    updatedBalance,
   } = opts;
 
   const subject = `Futsal settled – ${matchDate.toLocaleString()}`;
   const share = shareCents;
   const total = totalCents;
   const where = location ? ` at ${location}` : "";
+  const formattedBalance = new Intl.NumberFormat("en-BD", {
+    style: "currency",
+    currency: "BDT",
+    maximumFractionDigits: 2,
+  }).format(updatedBalance);
 
   const html = `
     <div style="font-family:Arial, sans-serif; max-width:600px; margin:0 auto; padding:20px; border:1px solid #e0e0e0; border-radius:8px; background-color:#f9f9f9;">
@@ -46,9 +53,8 @@ export async function sendMatchSettledEmail(opts: {
         <ul style="padding-left:20px;">
           <li style="margin-bottom:10px;">Total cost: <b style="color:#e53935;">${total}</b></li>
           <li style="margin-bottom:10px;">Your share: <b style="color:#e53935;">${share}</b></li>
-          <li style="margin-bottom:10px;">Players: <b>${
-            playerCount ?? "Multiple"
-          }</b></li>
+          <li style="margin-bottom:10px;">Players: <b>${playerCount ?? "Multiple"}</b></li>
+          <li style="margin-bottom:10px;">Your new balance: <b style="color:#4CAF50;">${formattedBalance}</b></li>
         </ul>
       </div>
       <p style="font-size:16px;">You can view your balance and transactions in your dashboard.</p>
