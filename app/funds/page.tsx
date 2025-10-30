@@ -12,14 +12,34 @@ export default async function Funds() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string;
 
+  // Fetch fund requests
   const requests = await prisma.fundRequest.findMany({
     where: { userId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Fetch all transactions for the user
+  const transactions = await prisma.transaction.findMany({
+    where: { userId },
+    include: { match: true },
     orderBy: { createdAt: "desc" },
   });
 
   const initialRequests = requests.map((r) => ({
     ...r,
     createdAt: r.createdAt.toISOString(),
+  }));
+
+  const initialTransactions = transactions.map((t) => ({
+    ...t,
+    createdAt: t.createdAt.toISOString(),
+    match: t.match
+      ? {
+          ...t.match,
+          date: t.match.date.toISOString(),
+          createdAt: t.match.createdAt.toISOString(),
+        }
+      : null,
   }));
 
   async function action(formData: FormData) {
@@ -48,6 +68,7 @@ export default async function Funds() {
     <FundsView
       action={action}
       initialRequests={initialRequests}
+      initialTransactions={initialTransactions}
       channels={[...CHANNELS]}
     />
   );

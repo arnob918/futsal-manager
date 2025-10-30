@@ -12,13 +12,33 @@ type FundRequest = {
   createdAt: string; // ISO
 };
 
+type Transaction = {
+  id: string;
+  amount: number;
+  memo: string | null;
+  createdAt: string; // ISO
+  kind:
+    | "GENERIC"
+    | "FUND_TOPUP"
+    | "MATCH_PAYER_CREDIT"
+    | "MATCH_PARTICIPANT_DEBIT";
+  matchId: string | null;
+  match: {
+    id: string;
+    date: string;
+    location: string | null;
+  } | null;
+};
+
 export default function FundsView({
   action,
   initialRequests,
+  initialTransactions,
   channels,
 }: {
   action: (formData: FormData) => Promise<{ ok: boolean } | void>;
   initialRequests: FundRequest[];
+  initialTransactions: Transaction[];
   channels: string[];
 }) {
   const router = useRouter();
@@ -177,35 +197,169 @@ export default function FundsView({
           </form>
         </div>
 
-        {/* Requests List */}
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold">My requests</h2>
-          {initialRequests.length === 0 ? (
+        {/* Transaction Ledger */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">My Transaction History</h2>
+
+          {initialTransactions.length === 0 && initialRequests.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No fund requests yet.
+              No transaction history yet.
             </p>
           ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {initialRequests.map((r) => (
-                <article key={r.id} className="rounded-xl border p-3 sm:p-4">
+            <div className="hidden md:block overflow-x-auto rounded-xl border">
+              <table className="w-full min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Date
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Description
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-right text-xs font-medium  uppercase tracking-wider text-amber-600"
+                    >
+                      Request
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-right text-xs font-medium  uppercase tracking-wider text-green-600"
+                    >
+                      Credit
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-4 py-3 text-right text-xs font-medium  uppercase tracking-wider text-red-600"
+                    >
+                      Debit
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {/* Combine and sort transactions and requests by date */}
+                  {[
+                    ...initialTransactions.map((t) => ({
+                      id: t.id,
+                      date: new Date(t.createdAt),
+                      description: getTransactionDescription(t),
+                      amount: t.amount,
+                      isTransaction: true,
+                      status: null,
+                      item: t,
+                    })),
+                    ...initialRequests.map((r) => ({
+                      id: r.id,
+                      date: new Date(r.createdAt),
+                      description: r.note || "Fund request",
+                      amount: r.amount,
+                      isTransaction: false,
+                      status: r.status,
+                      item: r,
+                    })),
+                  ]
+                    .sort((a, b) => b.date.getTime() - a.date.getTime())
+                    .map((item, index) => (
+                      <tr
+                        key={item.id}
+                        className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                      >
+                        <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
+                          {prettyDateTime(item.date)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {item.description}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-right text-amber-600">
+                          {!item.isTransaction ? formatTaka(item.amount) : "—"}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-right text-green-600">
+                          {item.isTransaction && item.amount > 0
+                            ? formatTaka(item.amount)
+                            : "—"}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-right text-red-600">
+                          {item.isTransaction && item.amount < 0
+                            ? formatTaka(Math.abs(item.amount))
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Mobile View - Card-based ledger for small screens */}
+          <div className="md:hidden space-y-3 mt-4">
+            {[
+              ...initialTransactions.map((t) => ({
+                id: t.id,
+                date: new Date(t.createdAt),
+                description: getTransactionDescription(t),
+                amount: t.amount,
+                isTransaction: true,
+                status: null,
+                item: t,
+              })),
+              ...initialRequests.map((r) => ({
+                id: r.id,
+                date: new Date(r.createdAt),
+                description: r.note || "Fund request",
+                amount: r.amount,
+                isTransaction: false,
+                status: r.status,
+                item: r,
+              })),
+            ]
+              .sort((a, b) => b.date.getTime() - a.date.getTime())
+              .map((item) => (
+                <article key={item.id} className="rounded-xl border p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-sm font-semibold">
-                        {formatTaka(r.amount)}
+                      <div
+                        className={`text-sm font-semibold ${
+                          !item.isTransaction
+                            ? "text-amber-600"
+                            : item.amount > 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {formatTaka(item.amount)}
                       </div>
                       <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                        {r.note || "—"}
+                        {item.description}
                       </div>
                     </div>
-                    <StatusPill status={r.status} />
+                    <div>
+                      {item.isTransaction ? (
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            item.amount > 0
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {item.amount > 0 ? "Credit" : "Debit"}
+                        </span>
+                      ) : (
+                        <StatusPill status={item.status} />
+                      )}
+                    </div>
                   </div>
                   <div className="mt-3 text-xs text-muted-foreground">
-                    {prettyDateTime(new Date(r.createdAt))}
+                    {prettyDateTime(item.date)}
                   </div>
                 </article>
               ))}
-            </div>
-          )}
+          </div>
         </section>
       </div>
     </div>
@@ -221,7 +375,11 @@ function Spinner() {
   );
 }
 
-function StatusPill({ status }: { status: FundRequest["status"] }) {
+function StatusPill({
+  status,
+}: {
+  status: "PENDING" | "APPROVED" | "REJECTED" | null;
+}) {
   const map = {
     PENDING: {
       cls: "bg-amber-50 text-amber-700 border-amber-200",
@@ -229,18 +387,18 @@ function StatusPill({ status }: { status: FundRequest["status"] }) {
       label: "Pending",
     },
     APPROVED: {
-      cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      dot: "bg-emerald-500",
+      cls: "bg-amber-50 text-amber-700 border-amber-200",
+      dot: "bg-amber-500",
       label: "Approved",
     },
     REJECTED: {
-      cls: "bg-rose-50 text-rose-700 border-rose-200",
-      dot: "bg-rose-500",
+      cls: "bg-amber-50 text-amber-700 border-amber-200",
+      dot: "bg-amber-500",
       label: "Rejected",
     },
   } as const;
 
-  const s = map[status];
+  const s = map[status || "PENDING"];
   return (
     <span
       className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-xs ${s.cls}`}
@@ -274,4 +432,37 @@ function formatTaka(amount: number) {
   } catch {
     return `${amount.toFixed(2)}৳`;
   }
+}
+
+function getTransactionDescription(transaction: Transaction): string {
+  switch (transaction.kind) {
+    case "FUND_TOPUP":
+      return transaction.memo || "Fund added to account";
+    case "MATCH_PAYER_CREDIT":
+      return transaction.match
+        ? `Credit for match on ${formatDate(new Date(transaction.match.date))}${
+            transaction.match.location
+              ? ` at ${transaction.match.location}`
+              : ""
+          }`
+        : "Match payment credit";
+    case "MATCH_PARTICIPANT_DEBIT":
+      return transaction.match
+        ? `Match fee for ${formatDate(new Date(transaction.match.date))}${
+            transaction.match.location
+              ? ` at ${transaction.match.location}`
+              : ""
+          }`
+        : "Match participation fee";
+    default:
+      return transaction.memo || "Transaction";
+  }
+}
+
+function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
