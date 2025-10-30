@@ -91,11 +91,21 @@ export default function SettleForm({
         throw new Error("Enter a valid total amount (BDT).");
       if (!count) throw new Error("Select at least one participant.");
 
-      // Inject selected participants + payer
-      selected.forEach((id) => formData.append("participants", id));
-      formData.set("matchId", matchId);
+      // Create a new FormData to avoid duplicate entries
+      const cleanFormData = new FormData();
 
-      const res = await action(formData);
+      // Copy over non-participant form fields
+      for (const [key, value] of formData.entries()) {
+        if (key !== "participants") {
+          cleanFormData.append(key, value);
+        }
+      }
+
+      // Add only the selected participants
+      selected.forEach((id) => cleanFormData.append("participants", id));
+      cleanFormData.set("matchId", matchId);
+
+      const res = await action(cleanFormData);
       if (!res || (res as any).ok) {
         setSuccess("Match settled successfully.");
         // Reset + navigate to matches

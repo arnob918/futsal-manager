@@ -57,7 +57,6 @@ export async function sendMatchSettledEmail(opts: {
       </div>
       <div style="border-top:1px solid #e0e0e0; padding-top:15px; margin-top:20px; text-align:center; color:#757575; font-size:14px;">
         <p>— Penalty Merchants</p>
-        <p style="margin:5px 0;">The field where football meets brotherhood.</p>
         <a href="https://penalty-marchants.vercel.app/" style="color:#4CAF50; text-decoration:none;">penalty-marchants.vercel.app</a>
       </div>
     </div>

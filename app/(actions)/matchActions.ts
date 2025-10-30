@@ -120,7 +120,7 @@ export async function settleMatch(
             location: match.location,
             shareCents: share,
             totalCents: totalCostCents,
-            playerCount: participants.length,
+            playerCount: participantIds.length,
           }).catch((error) => {
             console.error(`Failed to send email to ${u.email}:`, error);
             return null; // Prevent the promise from rejecting
