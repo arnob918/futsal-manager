@@ -52,6 +52,7 @@ function getInitials(name?: string | null) {
 }
 
 function prettyDateTime(d: Date, tz: string = "Asia/Dhaka") {
+  console.log({ d });
   const datePart = new Intl.DateTimeFormat("en-BD", {
     weekday: "short",
     day: "2-digit",
@@ -66,6 +67,7 @@ function prettyDateTime(d: Date, tz: string = "Asia/Dhaka") {
     hour12: true, // AM/PM
     timeZone: tz,
   }).format(d);
+  console.log(`${datePart} • ${timePart}`);
 
   return `${datePart} • ${timePart}`;
 }
