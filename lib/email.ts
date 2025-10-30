@@ -56,7 +56,9 @@ export async function sendMatchSettledEmail(opts: {
           <li style="margin-bottom:10px;">Players: <b>${
             playerCount ?? "Multiple"
           }</b></li>
-          <li style="margin-bottom:10px;">Your new balance: <b style="color:#4CAF50;">${formattedBalance}</b></li>
+          <li style="margin-bottom:10px;">Your new balance: <b style="color:${
+            updatedBalance < 0 ? "#e53935" : "#4CAF50"
+          };">${formattedBalance}</b></li>
         </ul>
       </div>
       <p style="font-size:16px;">You can view your balance and transactions in your dashboard.</p>
