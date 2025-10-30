@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Image from "next/image";
 import SignInButton from "./signin/sign-in-btn";
+import NextTopLoader from "nextjs-toploader";
 
 import { Metadata } from "next";
 
@@ -33,6 +34,7 @@ export default async function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <nav className="fixed top-0 left-0 right-0 bg-white border-b px-4 py-3 flex gap-2 sm:gap-4 items-center z-50">
+          <NextTopLoader color="#10B981" height={3} />
           <Link
             href="/"
             className="font-semibold hover:text-blue-600 transition-colors"
