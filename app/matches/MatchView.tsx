@@ -51,17 +51,22 @@ function getInitials(name?: string | null) {
   return (first + last).toUpperCase() || "🤝";
 }
 
-function prettyDateTime(d: Date) {
+function prettyDateTime(d: Date, tz: string = "Asia/Dhaka") {
   const datePart = new Intl.DateTimeFormat("en-BD", {
     weekday: "short",
     day: "2-digit",
     month: "short",
     year: "numeric",
+    timeZone: tz,
   }).format(d);
+
   const timePart = new Intl.DateTimeFormat("en-BD", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true, // AM/PM
+    timeZone: tz,
   }).format(d);
+
   return `${datePart} • ${timePart}`;
 }
 
