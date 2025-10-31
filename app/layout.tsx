@@ -16,6 +16,16 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.png",
   },
+  openGraph: {
+    images: [
+      {
+        url: "/opengraph-image.png", // Replace with your actual image path
+        width: 1200, // Recommended dimensions
+        height: 630,
+        alt: "Penalty Merchants OpenGraph Image",
+      },
+    ],
+  },
 };
 
 const inter = Inter({ subsets: ["latin"] });
