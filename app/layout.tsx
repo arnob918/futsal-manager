@@ -57,6 +57,12 @@ export default async function RootLayout({
                   Funds
                 </Link>
               )}
+              <Link
+                href="/about"
+                className=" hover:text-blue-600 transition-colors"
+              >
+                About
+              </Link>
 
               {/* Mobile menu */}
               {/* <div className="sm:hidden ml-auto relative group">
