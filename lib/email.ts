@@ -63,11 +63,11 @@ export async function sendMatchSettledEmail(opts: {
       </div>
       <p style="font-size:16px;">You can view your balance and transactions in your dashboard.</p>
       <div style="text-align:center; margin:25px 0;">
-        <a href="https://penalty-marchants.vercel.app/" style="background-color:#4CAF50; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; font-weight:bold;">Visit Dashboard</a>
+        <a href="https://penalty-merchants.vercel.app/" style="background-color:#4CAF50; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; font-weight:bold;">Visit Dashboard</a>
       </div>
       <div style="border-top:1px solid #e0e0e0; padding-top:15px; margin-top:20px; text-align:center; color:#757575; font-size:14px;">
         <p>— Penalty Merchants</p>
-        <a href="https://penalty-marchants.vercel.app/" style="color:#4CAF50; text-decoration:none;">penalty-marchants.vercel.app</a>
+        <a href="https://penalty-merchants.vercel.app/" style="color:#4CAF50; text-decoration:none;">penalty-merchants.vercel.app</a>
       </div>
     </div>
   `;

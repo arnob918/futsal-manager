@@ -11,7 +11,7 @@ import NextTopLoader from "nextjs-toploader";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Penalty Marchants",
+  title: "Penalty Merchants",
   description: "Manage your futsal matches and funds easily.",
   icons: {
     icon: "/favicon.png",

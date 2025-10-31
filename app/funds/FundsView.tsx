@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { BkashAccordion } from "./BkashAccordion";
 
 type FundRequest = {
   id: string;
@@ -77,7 +78,7 @@ export default function FundsView({
   }
 
   return (
-    <div className="mt-12 flex flex-col items-center">
+    <div className="mt-12 mb-12 flex flex-col items-center">
       <div className="space-y-5 max-w-5xl w-full">
         <header className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -362,6 +363,7 @@ export default function FundsView({
           </div>
         </section>
       </div>
+      <BkashAccordion bkashNumber="01875782911" />
     </div>
   );
 }

@@ -16,7 +16,7 @@ export default function AboutPage() {
       <section className="px-4 pt-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
-            Why <span className="text-emerald-600">Penalty Marchants Web</span>?
+            Why <span className="text-emerald-600">Penalty Merchants Web</span>?
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600">
             We built this platform to solve a simple problem: managing weekly
