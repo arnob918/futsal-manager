@@ -102,8 +102,8 @@ export async function settleMatch(
       };
     },
     {
-      maxWait: 5000, // 5s max wait time
-      timeout: 10000, // 10s timeout
+      maxWait: 100000, // 100s max wait time
+      timeout: 1000000, // 1000s timeout
       isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, // Less strict isolation level
     }
   );
