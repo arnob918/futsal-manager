@@ -109,24 +109,42 @@ export async function settleMatch(
   );
 
   // Send emails AFTER the transaction (don't block/taint the commit if email fails)
-  // Fire-and-forget style with logging; do not throw if one email fails
-  await Promise.allSettled(
-    participants.map((u: any) =>
-      u.email
-        ? sendMatchSettledEmail({
-            to: u.email,
-            playerName: u.name,
+  // True fire-and-forget: don't await, let them run in background
+  participants.forEach((user: any) => {
+    if (!user.email) return;
+    
+    // Run email sending in background without blocking
+    (async () => {
+      const sendEmailWithRetry = async (retryCount = 0): Promise<void> => {
+        try {
+          await sendMatchSettledEmail({
+            to: user.email,
+            playerName: user.name,
             matchDate: match.date,
             location: match.location,
             shareCents: share,
             totalCents: totalCostCents,
             playerCount: participantIds.length,
-            updatedBalance: u.balance, // Pass the updated balance here
-          }).catch((error) => {
-            console.error(`Failed to send email to ${u.email}:`, error);
-            return null; // Prevent the promise from rejecting
-          })
-        : Promise.resolve()
-    )
-  );
+            updatedBalance: user.balance,
+          });
+          console.log(`Email sent successfully to ${user.email}`);
+        } catch (error: any) {
+          // Retry on 421 errors (temporary Gmail issues)
+          if (error.responseCode === 421 && retryCount < 3) {
+            const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
+            console.warn(`Retrying email to ${user.email} after ${delay}ms (attempt ${retryCount + 1})`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return sendEmailWithRetry(retryCount + 1);
+          }
+          
+          console.error(`Failed to send email to ${user.email} after ${retryCount + 1} attempts:`, error);
+        }
+      };
+      
+      // Start the email sending process
+      sendEmailWithRetry().catch(err => 
+        console.error(`Unexpected error in email sending for ${user.email}:`, err)
+      );
+    })();
+  });
 }
