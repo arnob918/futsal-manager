@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import * as React from "react";
 
 type User = {
@@ -144,33 +145,35 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
               {users.map((user) => (
                 <tr key={user.id} className="border-b last:border-0">
                   <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="shrink-0">
-                        {user.image ? (
-                          <Image
-                            src={user.image}
-                            alt={user.name ?? user.email ?? "User"}
-                            width={32}
-                            height={32}
-                            className="rounded-full"
-                          />
-                        ) : (
-                          <div className="grid size-8 place-items-center rounded-full bg-muted text-xs font-medium">
-                            {(user.name || user.email || "?")
-                              .split(" ")
-                              .map((s) => s?.[0])
-                              .slice(0, 2)
-                              .join("")
-                              .toUpperCase()}
+                    <Link href={`/admin/balances/${user.id}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="shrink-0">
+                          {user.image ? (
+                            <Image
+                              src={user.image}
+                              alt={user.name ?? user.email ?? "User"}
+                              width={32}
+                              height={32}
+                              className="rounded-full"
+                            />
+                          ) : (
+                            <div className="grid size-8 place-items-center rounded-full bg-muted text-xs font-medium">
+                              {(user.name || user.email || "?")
+                                .split(" ")
+                                .map((s) => s?.[0])
+                                .slice(0, 2)
+                                .join("")
+                                .toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-medium">
+                            {user.name ?? "Unnamed"}
                           </div>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-medium">
-                          {user.name ?? "Unnamed"}
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   </td>
                   <td className="py-3 px-4 text-sm text-muted-foreground">
                     {user.email ?? "—"}
