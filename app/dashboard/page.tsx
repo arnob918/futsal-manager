@@ -205,15 +205,24 @@ export default async function Dashboard() {
               ) : (
                 <div className="space-y-3">
                   {pastMatches.map((match) => {
-                    const participated = match.participants.some(
+                    const userParticipant = match.participants.find(
                       (p) => p.userId === userId
                     );
-                    const costPerPerson =
-                      match.participants.length > 0
-                        ? Math.round(
-                            match.totalCost / match.participants.length
-                          )
+                    const participated = !!userParticipant;
+                    
+                    const totalHeads = match.participants.reduce(
+                      (acc, p) => acc + 1 + (p.guests || 0),
+                      0
+                    );
+                    
+                    const costPerHead =
+                      totalHeads > 0
+                        ? Math.round(match.totalCost / totalHeads)
                         : 0;
+                        
+                    const userShare = participated
+                      ? costPerHead * (1 + (userParticipant.guests || 0))
+                      : 0;
 
                     return (
                       <div
@@ -254,6 +263,13 @@ export default async function Dashboard() {
                                 {match.participants.length !== 1 ? "s" : ""}
                               </span>
                             </div>
+                            {participated && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-500">
+                                  Guests: {userParticipant?.guests || 0}
+                                </span>
+                              </div>
+                            )}
                           </div>
                           <div className="flex flex-col items-end gap-1 flex-shrink-0">
                             {participated ? (
@@ -263,7 +279,7 @@ export default async function Dashboard() {
                                     Your Share
                                   </p>
                                   <p className="text-sm font-bold text-emerald-600">
-                                    {costPerPerson} BDT
+                                    {userShare} BDT
                                   </p>
                                 </div>
                                 {match.settled ? (

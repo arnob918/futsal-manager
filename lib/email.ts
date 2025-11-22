@@ -16,6 +16,8 @@ export async function sendMatchSettledEmail(opts: {
   shareCents: number;
   totalCents: number;
   playerCount: number;
+  guestCount: number;
+  perHeadShare: number;
   updatedBalance: number;
 }) {
   const {
@@ -25,7 +27,9 @@ export async function sendMatchSettledEmail(opts: {
     location,
     shareCents,
     totalCents,
+    perHeadShare,
     playerCount,
+    guestCount,
     updatedBalance,
   } = opts;
 
@@ -52,7 +56,13 @@ export async function sendMatchSettledEmail(opts: {
         <h3 style="margin-top:0; color:#333;">Match Summary</h3>
         <ul style="padding-left:20px;">
           <li style="margin-bottom:10px;">Total cost: <b style="color:#e53935;">${total}</b></li>
+          <li style="margin-bottom:10px;">Per Head: <b style="color:#e53935;">${perHeadShare}</b></li>
           <li style="margin-bottom:10px;">Your share: <b style="color:#e53935;">${share}</b></li>
+          ${
+            guestCount > 0
+              ? `<li style="margin-bottom:10px;">Guests: <b>${guestCount}</b></li>`
+              : ""
+          }
           <li style="margin-bottom:10px;">Players: <b>${
             playerCount ?? "Multiple"
           }</b></li>

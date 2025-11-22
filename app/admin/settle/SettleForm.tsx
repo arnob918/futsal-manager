@@ -53,22 +53,44 @@ export default function SettleForm({
     });
   }, [users, query]);
 
+  const [guests, setGuests] = React.useState<Record<string, number>>({});
+
   // Per-head split
   const count = selected.size;
+  const totalGuests = Array.from(selected).reduce(
+    (acc, id) => acc + (guests[id] || 0),
+    0
+  );
+  const totalHeads = count + totalGuests;
   const totalNum = Number(totalBDT);
   const perHead =
-    Number.isFinite(totalNum) && totalNum > 0 && count > 0
-      ? Math.round((totalNum / count) * 100) / 100
+    Number.isFinite(totalNum) && totalNum > 0 && totalHeads > 0
+      ? Math.round((totalNum / totalHeads) * 100) / 100
       : 0;
 
   function toggleUser(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+        // clear guests if deselected
+        setGuests((g) => {
+          const newG = { ...g };
+          delete newG[id];
+          return newG;
+        });
+      } else {
+        next.add(id);
+      }
       return next;
     });
   }
+
+  function updateGuests(id: string, num: number) {
+    if (num < 0) return;
+    setGuests((prev) => ({ ...prev, [id]: num }));
+  }
+
   function selectAllVisible() {
     setSelected((prev) => {
       const ids = new Set(prev);
@@ -78,6 +100,7 @@ export default function SettleForm({
   }
   function clearSelection() {
     setSelected(new Set());
+    setGuests({});
   }
 
   async function handleSubmit(formData: FormData) {
@@ -101,8 +124,12 @@ export default function SettleForm({
         }
       }
 
-      // Add only the selected participants
-      selected.forEach((id) => cleanFormData.append("participants", id));
+      // Prepare participants data
+      const participantsData = Array.from(selected).map((id) => ({
+        userId: id,
+        guests: guests[id] || 0,
+      }));
+      cleanFormData.set("participantsData", JSON.stringify(participantsData));
       cleanFormData.set("matchId", matchId);
 
       const res = await action(cleanFormData);
@@ -111,6 +138,7 @@ export default function SettleForm({
         // Reset + navigate to matches
         setTotalBDT("");
         setSelected(new Set());
+        setGuests({});
         router.push("/admin/settle");
       }
     } catch (e: any) {
@@ -204,7 +232,7 @@ export default function SettleForm({
               />
               <span className="text-xs text-muted-foreground">
                 Per head: <strong>{formatBDT(perHead)}</strong>{" "}
-                {count ? `(${count} players)` : ""}
+                {count ? `(${totalHeads} heads: ${count} players + ${totalGuests} guests)` : ""}
               </span>
             </label>
 
@@ -243,31 +271,63 @@ export default function SettleForm({
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {filteredUsers.map((u) => {
                 const checked = selected.has(u.id);
+                const guestCount = guests[u.id] || 0;
                 return (
-                  <label
+                  <div
                     key={u.id}
-                    className={`rounded-lg border p-2 text-sm transition hover:shadow-sm cursor-pointer ${
+                    className={`flex flex-col gap-2 rounded-lg border p-2 text-sm transition hover:shadow-sm ${
                       checked ? "border-emerald-300 bg-emerald-50" : ""
                     }`}
                   >
-                    <input
-                      type="checkbox"
-                      name="participants"
-                      value={u.id}
-                      checked={checked}
-                      onChange={() => toggleUser(u.id)}
-                      className="mr-2 align-middle"
-                    />
-                    <span className="font-medium">
-                      {u.name ?? u.email ?? "Player"}
-                    </span>
-                    <span className="block text-xs text-muted-foreground">
-                      {u.email}
-                      {u.lastPlayedAt
-                        ? ` • last: ${shortDate(new Date(u.lastPlayedAt))}`
-                        : " • no recent play"}
-                    </span>
-                  </label>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="participants"
+                        value={u.id}
+                        checked={checked}
+                        onChange={() => toggleUser(u.id)}
+                        className="mr-2 align-middle"
+                      />
+                      <div className="flex-1">
+                        <span className="font-medium">
+                          {u.name ?? u.email ?? "Player"}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {u.email}
+                        </span>
+                      </div>
+                    </label>
+                    {checked && (
+                      <div className="ml-6 flex items-center gap-2">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Guests:
+                        </span>
+                        <div
+                          className="flex items-center rounded-md border bg-background"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => updateGuests(u.id, Math.max(0, guestCount - 1))}
+                            className="flex h-6 w-6 items-center justify-center rounded-l-md border-r hover:bg-muted disabled:opacity-50"
+                            disabled={guestCount <= 0}
+                          >
+                            -
+                          </button>
+                          <div className="flex h-6 min-w-[2rem] items-center justify-center text-xs font-medium">
+                            {guestCount}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => updateGuests(u.id, guestCount + 1)}
+                            className="flex h-6 w-6 items-center justify-center rounded-r-md border-l hover:bg-muted"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
               {filteredUsers.length === 0 && (

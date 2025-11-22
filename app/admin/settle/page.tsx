@@ -58,19 +58,27 @@ export default async function SettlePage() {
     "use server";
     const matchId = String(formData.get("matchId") || "");
     const totalBDT = Number(formData.get("totalBDT"));
-    const participantIds = formData.getAll("participants") as string[];
+    const participantsJson = String(formData.get("participantsData") || "[]");
 
     if (!matchId) throw new Error("Select a match.");
     if (!Number.isFinite(totalBDT) || totalBDT <= 0) {
       throw new Error("Enter a valid total amount (BDT).");
     }
-    if (!participantIds.length)
+
+    let participants: { userId: string; guests: number }[] = [];
+    try {
+      participants = JSON.parse(participantsJson);
+    } catch {
+      throw new Error("Invalid participants data.");
+    }
+
+    if (!participants.length)
       throw new Error("Select at least one participant.");
 
     // Round to whole BDT per your schema (totalCost is Int)
     const total = Math.round(totalBDT);
 
-    await settleMatch(matchId, total, participantIds);
+    await settleMatch(matchId, total, participants);
     revalidatePath("/matches");
     return { ok: true };
   }

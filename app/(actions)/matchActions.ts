@@ -23,12 +23,18 @@ export async function createMatch(formData: FormData) {
 export async function settleMatch(
   matchId: string,
   totalCostCents: number,
-  participantIds: string[]
+  participantsData: { userId: string; guests: number }[]
 ) {
   await adminGuard();
 
   // Import Prisma for transaction isolation level
   const { Prisma } = require("@prisma/client");
+  const totalHeads = participantsData.reduce(
+    (acc, p) => acc + 1 + p.guests,
+    0
+  );
+  
+  const perHeadShare = Math.round(totalCostCents / totalHeads);
 
   // Do all DB work atomically first
   const { match, share, participants } = await prisma.$transaction(
@@ -38,9 +44,9 @@ export async function settleMatch(
         include: { participants: true },
       });
       if (!m) throw new Error("Match not found");
-      if (participantIds.length === 0) throw new Error("No participants");
+      if (participantsData.length === 0) throw new Error("No participants");
 
-      const perShare = Math.round(totalCostCents / participantIds.length);
+      // Calculate total heads (players + guests)
 
       // Update match
       await tx.match.update({
@@ -50,32 +56,33 @@ export async function settleMatch(
 
       // Ensure participant rows exist - use Promise.all for batch operations
       await Promise.all(
-        participantIds.map((uid) =>
+        participantsData.map((p) =>
           tx.matchParticipant.upsert({
-            where: { matchId_userId: { matchId, userId: uid } },
-            create: { matchId, userId: uid },
-            update: {},
+            where: { matchId_userId: { matchId, userId: p.userId } },
+            create: { matchId, userId: p.userId, guests: p.guests },
+            update: { guests: p.guests },
           })
         )
       );
 
       // Debit participants with their share - use Promise.all for batch operations
       await Promise.all(
-        participantIds.map((uid) =>
-          tx.transaction.create({
+        participantsData.map((p) => {
+          const userShare = perHeadShare * (1 + p.guests);
+          return tx.transaction.create({
             data: {
-              userId: uid,
-              amount: -perShare,
-              memo: `Share for match ${matchId}`,
+              userId: p.userId,
+              amount: -userShare,
+              memo: `Share for match ${matchId} (${1 + p.guests} heads)`,
               kind: "MATCH_PARTICIPANT_DEBIT",
               matchId,
             },
-          })
-        )
+          });
+        })
       );
 
       // Refresh cached balances - use Promise.all for batch operations
-      const affected = Array.from(new Set([...participantIds]));
+      const affected = participantsData.map((p) => p.userId);
       const balanceUpdates = await Promise.all(
         affected.map(async (uid) => {
           const sum = await tx.transaction.aggregate({
@@ -91,13 +98,13 @@ export async function settleMatch(
 
       // Fetch emails & names for notifications (outside of the looped writes)
       const usersWithUpdatedBalance = await tx.user.findMany({
-        where: { id: { in: participantIds } },
+        where: { id: { in: affected } },
         select: { id: true, email: true, name: true, balance: true },
       });
 
       return {
         match: m,
-        share: perShare,
+        share: perHeadShare,
         participants: usersWithUpdatedBalance,
       };
     },
@@ -113,6 +120,10 @@ export async function settleMatch(
   participants.forEach((user: any) => {
     if (!user.email) return;
     
+    const pData = participantsData.find((p) => p.userId === user.id);
+    const userHeads = 1 + (pData?.guests || 0);
+    const userShare = share * userHeads;
+
     // Run email sending in background without blocking
     (async () => {
       const sendEmailWithRetry = async (retryCount = 0): Promise<void> => {
@@ -122,9 +133,11 @@ export async function settleMatch(
             playerName: user.name,
             matchDate: match.date,
             location: match.location,
-            shareCents: share,
+            shareCents: userShare, // Total share for this user (including guests)
             totalCents: totalCostCents,
-            playerCount: participantIds.length,
+            playerCount: totalHeads, // This might be misleading if we want total heads, but keeping as player count for now
+            perHeadShare: perHeadShare,
+            guestCount: pData?.guests || 0,
             updatedBalance: user.balance,
           });
           console.log(`Email sent successfully to ${user.email}`);

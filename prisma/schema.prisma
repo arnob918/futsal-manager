@@ -5,8 +5,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -29,14 +29,14 @@ enum FundStatus {
 }
 
 model User {
-  id             String            @id @default(cuid())
-  createdAt      DateTime          @default(now())
-  email          String            @unique
-  image          String?
-  name           String?
-  role           Role              @default(USER)
-  emailVerified  DateTime?
-  balance        Int               @default(0)
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  email         String    @unique
+  image         String?
+  name          String?
+  role          Role      @default(USER)
+  emailVerified DateTime?
+  balance       Int       @default(0)
   // passwordHash String?          // <- remove or keep optional; unused with Google
 
   // relations
@@ -44,7 +44,7 @@ model User {
   sessions       Session[]
   transactions   Transaction[]
   fundRequests   FundRequest[]
-  matchesHosted  Match[]           @relation("MatchPayer")
+  matchesHosted  Match[]            @relation("MatchPayer")
   participations MatchParticipant[]
 
   @@index([role])
@@ -83,22 +83,23 @@ model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
+
   @@unique([identifier, token])
 }
 
 model Match {
-  id            String             @id @default(cuid())
-  createdAt     DateTime           @default(now())
-  date          DateTime
-  location      String?
-  totalCost     Int                @default(0) // 
-  payerId       String?            // user who paid upfront
-  settled       Boolean            @default(false)
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  date      DateTime
+  location  String?
+  totalCost Int      @default(0) // 
+  payerId   String? // user who paid upfront
+  settled   Boolean  @default(false)
 
   // relations
-  payer         User?              @relation("MatchPayer", fields: [payerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  participants  MatchParticipant[] 
-  transactions  Transaction[]      
+  payer        User?              @relation("MatchPayer", fields: [payerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  participants MatchParticipant[]
+  transactions Transaction[]
 
   @@index([date])
   @@index([payerId])
@@ -106,12 +107,13 @@ model Match {
 }
 
 model MatchParticipant {
-  id       String  @id @default(cuid())
-  matchId  String
-  userId   String
+  id      String @id @default(cuid())
+  matchId String
+  userId  String
+  guests  Int    @default(0)
 
-  match    Match   @relation(fields: [matchId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([matchId, userId])
   @@index([userId])
@@ -122,13 +124,13 @@ model Transaction {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   userId    String
-  amount    Int                  // ; +credit, -debit
+  amount    Int // ; +credit, -debit
   memo      String?
   matchId   String?
   kind      TxKind   @default(GENERIC)
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  match     Match?   @relation(fields: [matchId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  match Match? @relation(fields: [matchId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   @@index([userId])
   @@index([matchId])
@@ -137,14 +139,14 @@ model Transaction {
 }
 
 model FundRequest {
-  id        String      @id @default(cuid())
-  createdAt DateTime    @default(now())
+  id        String     @id @default(cuid())
+  createdAt DateTime   @default(now())
   userId    String
-  amount    Int         // 
-  status    FundStatus  @default(PENDING)
+  amount    Int // 
+  status    FundStatus @default(PENDING)
   note      String?
 
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([userId])
   @@index([status])
