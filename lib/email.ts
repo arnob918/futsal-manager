@@ -89,3 +89,120 @@ export async function sendMatchSettledEmail(opts: {
     html,
   });
 }
+
+export async function sendNotificationEmail(opts: {
+  to: string;
+  subject: string;
+  message: string;
+  playerName?: string | null;
+}) {
+  const { to, subject, message, playerName } = opts;
+
+  const html = `
+    <div style="font-family:Arial, sans-serif; max-width:600px; margin:0 auto; padding:20px; border:1px solid #e0e0e0; border-radius:8px; background-color:#f9f9f9;">
+      <div style="text-align:center; padding:15px; background-color:#2196F3; color:white; border-radius:5px; margin-bottom:20px;">
+        <h2 style="margin:0;">Notification</h2>
+      </div>
+      <p style="font-size:16px;">Hi <b>${playerName ?? "there"}</b>,</p>
+      <div style="background-color:white; padding:15px; border-radius:5px; margin:15px 0; border-left:4px solid #2196F3;">
+        <p style="font-size:16px; white-space: pre-wrap;">${message}</p>
+      </div>
+      <p style="font-size:16px;">You can view your balance and transactions in your dashboard.</p>
+      <div style="text-align:center; margin:25px 0;">
+        <a href="https://penalty-merchants.vercel.app/" style="background-color:#2196F3; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; font-weight:bold;">Visit Dashboard</a>
+      </div>
+      <div style="border-top:1px solid #e0e0e0; padding-top:15px; margin-top:20px; text-align:center; color:#757575; font-size:14px;">
+        <p>— Penalty Merchants</p>
+        <a href="https://penalty-merchants.vercel.app/" style="color:#2196F3; text-decoration:none;">penalty-merchants.vercel.app</a>
+      </div>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM!,
+    to,
+    subject,
+    html,
+  });
+}
+
+export async function sendNegativeBalanceEmail(opts: {
+  to: string;
+  playerName?: string | null;
+  balance: string;
+}) {
+  const { to, playerName, balance } = opts;
+  const subject = "Quick heads up about your balance ⚽️";
+
+  const html = `
+    <div style="font-family:Arial, sans-serif; max-width:600px; margin:0 auto; padding:20px; border:1px solid #e0e0e0; border-radius:8px; background-color:#f9f9f9;">
+      <div style="text-align:center; padding:15px; background-color:#FF7043; color:white; border-radius:5px; margin-bottom:20px;">
+        <h2 style="margin:0;">Negative Balance Reminder</h2>
+      </div>
+      <p style="font-size:16px;">Hi <b>${playerName ?? "there"}</b>,</p>
+      <div style="background-color:white; padding:15px; border-radius:5px; margin:15px 0; border-left:4px solid #FF7043;">
+        <p style="font-size:16px; margin:0;">Just a quick reminder to let you know your balance is currently negative.</p>
+        <p style="font-size:16px; margin-top:10px;">Your current balance is <b style="color:#e53935;">${balance}</b>.</p>
+      </div>
+      <p style="font-size:16px;">Add money to your balance to avoid any inconvenience.</p>
+      <div style="text-align:center; margin:25px 0;">
+        <a href="https://penalty-merchants.vercel.app/" style="background-color:#FF7043; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; font-weight:bold;">Check Dashboard</a>
+      </div>
+      <div style="border-top:1px solid #e0e0e0; padding-top:15px; margin-top:20px; text-align:center; color:#757575; font-size:14px;">
+        <p>— Penalty Merchants</p>
+      </div>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM!,
+    to,
+    subject,
+    html,
+  });
+}
+
+export async function sendFundRequestEmail(opts: {
+  to: string;
+  requesterName: string;
+  amount: number;
+  note?: string;
+}) {
+  const { to, requesterName, amount, note } = opts;
+  const subject = `New Fund Request from ${requesterName}`;
+  const formattedAmount = new Intl.NumberFormat("en-BD", {
+    style: "currency",
+    currency: "BDT",
+    maximumFractionDigits: 2,
+  }).format(amount);
+
+  const html = `
+    <div style="font-family:Arial, sans-serif; max-width:600px; margin:0 auto; padding:20px; border:1px solid #e0e0e0; border-radius:8px; background-color:#f9f9f9;">
+      <div style="text-align:center; padding:15px; background-color:#9C27B0; color:white; border-radius:5px; margin-bottom:20px;">
+        <h2 style="margin:0;">New Fund Request</h2>
+      </div>
+      <p style="font-size:16px;"><b>${requesterName}</b> has requested funds.</p>
+      <div style="background-color:white; padding:15px; border-radius:5px; margin:15px 0; border-left:4px solid #9C27B0;">
+        <p style="font-size:16px; margin-bottom:10px;">Amount: <b style="color:#4CAF50;">${formattedAmount}</b></p>
+        ${
+          note
+            ? `<p style="font-size:16px; margin-top:0;">Note: <i>${note}</i></p>`
+            : ""
+        }
+      </div>
+      <div style="text-align:center; margin:25px 0;">
+        <a href="https://penalty-merchants.vercel.app/admin/funds" style="background-color:#9C27B0; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; font-weight:bold;">Review Request</a>
+      </div>
+      <div style="border-top:1px solid #e0e0e0; padding-top:15px; margin-top:20px; text-align:center; color:#757575; font-size:14px;">
+        <p>— Penalty Merchants</p>
+      </div>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM!,
+    to,
+    subject,
+    html,
+  });
+}

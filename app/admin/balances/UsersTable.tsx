@@ -139,6 +139,9 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                 >
                   Balance
                 </SortHeader>
+                <th className="py-3 px-4 text-right text-sm font-medium text-muted-foreground">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -193,13 +196,18 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                       {formatBDT(user.balance ?? 0)}
                     </span>
                   </td>
+                  <td className="py-3 px-4 text-right">
+                    {(user.balance ?? 0) < 0 && (
+                      <SendReminderButton userId={user.id} />
+                    )}
+                  </td>
                 </tr>
               ))}
 
               {users.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="py-4 text-center text-sm text-muted-foreground"
                   >
                     No members found.
@@ -275,4 +283,39 @@ function formatBDT(n: number) {
   } catch {
     return `${n.toFixed(2)}৳`;
   }
+}
+
+import { sendNegativeBalanceEmailAction } from "@/app/(actions)/emailActions";
+import { Loader2, Mail } from "lucide-react";
+import { toast } from "sonner";
+
+function SendReminderButton({ userId }: { userId: string }) {
+  const [isSending, setIsSending] = React.useState(false);
+
+  const handleSend = async () => {
+    setIsSending(true);
+    try {
+      const result = await sendNegativeBalanceEmailAction([userId]);
+      if (result.success) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.error);
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleSend}
+      disabled={isSending}
+      title="Send Reminder Email"
+      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-slate-100 h-8 w-8 text-rose-600"
+    >
+      {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+    </button>
+  );
 }

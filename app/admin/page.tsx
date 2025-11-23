@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, DollarSign, Calendar, CheckCircle, Wallet } from "lucide-react";
+import { Users, DollarSign, Calendar, CheckCircle, Wallet, Mail } from "lucide-react";
 
 export default async function Admin() {
   const session = await getServerSession(authOptions);
@@ -109,6 +109,25 @@ export default async function Admin() {
                   </h3>
                   <p className="text-sm text-slate-600">
                     View and manage all user account balances
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Email Notifications */}
+          <Link href="/admin/emails">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-indigo-300 transition-all group cursor-pointer">
+              <div className="flex items-start gap-4">
+                <div className="bg-indigo-100 p-3 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                  <Mail className="w-6 h-6 text-indigo-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-1">
+                    Email Notifications
+                  </h3>
+                  <p className="text-sm text-slate-600">
+                    Send email notifications to users
                   </p>
                 </div>
               </div>

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import UsersTable from "./UsersTable";
+import SendAllButton from "./SendAllButton";
 
 export default async function AdminBalances() {
   const session = await getServerSession(authOptions);
@@ -39,11 +40,18 @@ export default async function AdminBalances() {
 
   return (
     <div className="space-y-6 p-6 mt-12">
-      <header>
-        <h1 className="text-2xl font-semibold">Member Balances</h1>
-        <p className="text-sm text-muted-foreground">
-          View and manage all participants&apos; current balances
-        </p>
+      <header className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-semibold">Member Balances</h1>
+          <p className="text-sm text-muted-foreground">
+            View and manage all participants&apos; current balances
+          </p>
+        </div>
+        <SendAllButton
+          userIds={users
+            .filter((u) => (u.balance ?? 0) < 0)
+            .map((u) => u.id)}
+        />
       </header>
 
       {/* Stats Grid */}

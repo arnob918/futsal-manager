@@ -2,14 +2,46 @@
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { sendFundRequestEmail } from "@/lib/email";
 
 export async function requestFund(amount: number, note?: string) {
   const session = await getServerSession(authOptions);
   if (!session) throw new Error("Unauthorized");
   const userId = (session.user as any).id as string;
+  
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+
   await prisma.fundRequest.create({
     data: { userId, amount: amount, note },
   });
+
+  const adminEmailsEnv = process.env.ADMIN_EMAIL_LIST;
+  if (adminEmailsEnv) {
+    let adminEmails: string[] = [];
+    try {
+      // Try parsing as JSON first
+      adminEmails = JSON.parse(adminEmailsEnv);
+    } catch {
+      // Fallback to comma-separated
+      adminEmails = adminEmailsEnv.split(",").map((e) => e.trim());
+    }
+
+    if (Array.isArray(adminEmails)) {
+      await Promise.allSettled(
+        adminEmails.map((email) =>
+          sendFundRequestEmail({
+            to: email,
+            requesterName: user?.name || "Unknown User",
+            amount,
+            note,
+          })
+        )
+      );
+    }
+  }
 }
 
 export async function approveFund(reqId: string) {
