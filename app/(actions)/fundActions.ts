@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { sendFundRequestEmail } from "@/lib/email";
+
 
 export async function requestFund(amount: number, note?: string) {
   const session = await getServerSession(authOptions);
@@ -30,9 +30,11 @@ export async function requestFund(amount: number, note?: string) {
     }
 
     if (Array.isArray(adminEmails)) {
+      const { enqueueEmail, processQueue } = await import("@/lib/queue");
+      
       await Promise.allSettled(
         adminEmails.map((email) =>
-          sendFundRequestEmail({
+          enqueueEmail("FUND_REQUEST", {
             to: email,
             requesterName: user?.name || "Unknown User",
             amount,
@@ -40,6 +42,9 @@ export async function requestFund(amount: number, note?: string) {
           })
         )
       );
+      
+      // Trigger processing
+      processQueue().catch(console.error);
     }
   }
 }

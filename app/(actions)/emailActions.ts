@@ -3,7 +3,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { sendNotificationEmail, sendNegativeBalanceEmail } from "@/lib/email";
+
 
 export async function sendEmailAction(data: {
   userIds: string[];
@@ -34,9 +34,11 @@ export async function sendEmailAction(data: {
       },
     });
 
+    const { enqueueEmail, processQueue } = await import("@/lib/queue");
+
     const results = await Promise.allSettled(
       users.map((u) =>
-        sendNotificationEmail({
+        enqueueEmail("NOTIFICATION", {
           to: u.email,
           subject,
           message,
@@ -45,12 +47,15 @@ export async function sendEmailAction(data: {
       )
     );
 
+    // Trigger processing
+    processQueue().catch(console.error);
+
     const failed = results.filter((r) => r.status === "rejected").length;
     const succeeded = results.length - failed;
 
     return {
       success: true,
-      message: `Sent ${succeeded} emails. Failed: ${failed}`,
+      message: `Queued ${succeeded} emails. Failed: ${failed}`,
     };
   } catch (error) {
     console.error("Error sending emails:", error);
@@ -82,6 +87,8 @@ export async function sendNegativeBalanceEmailAction(userIds: string[]) {
       },
     });
 
+    const { enqueueEmail, processQueue } = await import("@/lib/queue");
+
     const results = await Promise.allSettled(
       users.map((u) => {
         const balance = u.balance;
@@ -91,7 +98,7 @@ export async function sendNegativeBalanceEmailAction(userIds: string[]) {
           maximumFractionDigits: 2,
         }).format(balance);
 
-        return sendNegativeBalanceEmail({
+        return enqueueEmail("NEGATIVE_BALANCE", {
           to: u.email,
           balance: formattedBalance,
           playerName: u.name,
@@ -99,12 +106,15 @@ export async function sendNegativeBalanceEmailAction(userIds: string[]) {
       })
     );
 
+    // Trigger processing
+    processQueue().catch(console.error);
+
     const failed = results.filter((r) => r.status === "rejected").length;
     const succeeded = results.length - failed;
 
     return {
       success: true,
-      message: `Sent ${succeeded} reminders. Failed: ${failed}`,
+      message: `Queued ${succeeded} reminders. Failed: ${failed}`,
     };
   } catch (error) {
     console.error("Error sending emails:", error);

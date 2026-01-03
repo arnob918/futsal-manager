@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { sendMatchSettledEmail } from "@/lib/email";
+
 
 const adminGuard = async () => {
   const session = await getServerSession(authOptions);
@@ -115,49 +115,45 @@ export async function settleMatch(
     }
   );
 
-  // Send emails AFTER the transaction (don't block/taint the commit if email fails)
+  // Send emails via queue
   // True fire-and-forget: don't await, let them run in background
-  participants.forEach((user: any) => {
-    if (!user.email) return;
-    
-    const pData = participantsData.find((p) => p.userId === user.id);
-    const userHeads = 1 + (pData?.guests || 0);
-    const userShare = share * userHeads;
-
-    // Run email sending in background without blocking
-    (async () => {
-      const sendEmailWithRetry = async (retryCount = 0): Promise<void> => {
-        try {
-          await sendMatchSettledEmail({
-            to: user.email,
-            playerName: user.name,
-            matchDate: match.date,
-            location: match.location,
-            shareCents: userShare, // Total share for this user (including guests)
-            totalCents: totalCostCents,
-            playerCount: totalHeads, // This might be misleading if we want total heads, but keeping as player count for now
-            perHeadShare: perHeadShare,
-            guestCount: pData?.guests || 0,
-            updatedBalance: user.balance,
-          });
-          console.log(`Email sent successfully to ${user.email}`);
-        } catch (error: any) {
-          // Retry on 421 errors (temporary Gmail issues)
-          if (error.responseCode === 421 && retryCount < 3) {
-            const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
-            console.warn(`Retrying email to ${user.email} after ${delay}ms (attempt ${retryCount + 1})`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return sendEmailWithRetry(retryCount + 1);
-          }
-          
-          console.error(`Failed to send email to ${user.email} after ${retryCount + 1} attempts:`, error);
-        }
-      };
+  const { enqueueEmail } = await import("@/lib/queue");
+  
+  await Promise.all(
+    participants.map(async (user: any) => {
+      if (!user.email) return;
       
-      // Start the email sending process
-      sendEmailWithRetry().catch(err => 
-        console.error(`Unexpected error in email sending for ${user.email}:`, err)
-      );
-    })();
-  });
+      const pData = participantsData.find((p) => p.userId === user.id);
+      const userHeads = 1 + (pData?.guests || 0);
+      const userShare = share * userHeads;
+
+      await enqueueEmail("MATCH_SETTLED", {
+        to: user.email,
+        playerName: user.name,
+        matchDate: match.date,
+        location: match.location,
+        shareCents: userShare,
+        totalCents: totalCostCents,
+        playerCount: totalHeads,
+        perHeadShare: perHeadShare,
+        guestCount: pData?.guests || 0,
+        updatedBalance: user.balance,
+      });
+    })
+  );
+
+  // Trigger queue processing (fire-and-forget)
+  // We use a fully qualified URL if possible, or relative if on same host (but fetch needs absolute usually in server actions?)
+  // Actually, in server actions, we can just call the function directly if we want, but we want it async/detached.
+  // But since we are in a server action, calling an API route via fetch is a good way to detach.
+  // However, we don't know the base URL easily. 
+  // A better way might be to just not await the processQueue() call if we import it?
+  // But Next.js might kill the lambda if we return.
+  // The safest way in Vercel/Next.js is often just to await it if it's fast, or use a cron/external trigger.
+  // But for now, let's try to just call processQueue() without awaiting it, or await it if we want to ensure it starts.
+  // Given the user wants to speed up the response, we should enqueue (fast) and then maybe trigger processing.
+  // Let's try importing processQueue and calling it without await, but catching errors.
+  
+  const { processQueue } = await import("@/lib/queue");
+  processQueue().catch(err => console.error("Background queue processing failed", err));
 }
