@@ -53,10 +53,12 @@ export async function approveFund(reqId: string) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as any).role !== "ADMIN")
     throw new Error("Unauthorized");
-  return await prisma.$transaction(async (tx: any) => {
+  
+  const result = await prisma.$transaction(async (tx: any) => {
     const fr = await tx.fundRequest.update({
       where: { id: reqId },
       data: { status: "APPROVED" },
+      include: { user: { select: { email: true, name: true } } },
     });
     await tx.transaction.create({
       data: {
@@ -70,11 +72,31 @@ export async function approveFund(reqId: string) {
       _sum: { amount: true },
       where: { userId: fr.userId },
     });
+    const newBalance = sum._sum.amount ?? 0;
     await tx.user.update({
       where: { id: fr.userId },
-      data: { balance: sum._sum.amount ?? 0 },
+      data: { balance: newBalance },
     });
+    
+    return {
+      userEmail: fr.user?.email,
+      userName: fr.user?.name,
+      amount: Number(fr.amount),
+      newBalance: Number(newBalance),
+    };
   });
+
+  // Send confirmation email to user
+  if (result.userEmail) {
+    const { enqueueEmail, processQueue } = await import("@/lib/queue");
+    await enqueueEmail("FUND_APPROVED", {
+      to: result.userEmail,
+      playerName: result.userName,
+      amount: result.amount,
+      newBalance: result.newBalance,
+    });
+    processQueue().catch(console.error);
+  }
 }
 
 export async function rejectFund(reqId: string) {

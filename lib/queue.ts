@@ -4,13 +4,15 @@ import {
   sendNotificationEmail,
   sendNegativeBalanceEmail,
   sendFundRequestEmail,
+  sendFundApprovedEmail,
 } from "@/lib/email";
 
 export type EmailType =
   | "MATCH_SETTLED"
   | "NOTIFICATION"
   | "NEGATIVE_BALANCE"
-  | "FUND_REQUEST";
+  | "FUND_REQUEST"
+  | "FUND_APPROVED";
 
 export async function enqueueEmail(type: EmailType, payload: any) {
   await prisma.emailQueue.create({
@@ -77,6 +79,9 @@ async function sendEmailByType(type: EmailType, payload: any) {
       break;
     case "FUND_REQUEST":
       await sendFundRequestEmail(payload);
+      break;
+    case "FUND_APPROVED":
+      await sendFundApprovedEmail(payload);
       break;
     default:
       throw new Error(`Unknown email type: ${type}`);

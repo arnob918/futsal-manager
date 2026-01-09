@@ -206,3 +206,54 @@ export async function sendFundRequestEmail(opts: {
     html,
   });
 }
+
+export async function sendFundApprovedEmail(opts: {
+  to: string;
+  playerName?: string | null;
+  amount: number;
+  newBalance: number;
+}) {
+  const { to, playerName, amount, newBalance } = opts;
+  const subject = "Your Fund Request Has Been Approved! ✅";
+  
+  const formattedAmount = new Intl.NumberFormat("en-BD", {
+    style: "currency",
+    currency: "BDT",
+    maximumFractionDigits: 2,
+  }).format(amount);
+  
+  const formattedBalance = new Intl.NumberFormat("en-BD", {
+    style: "currency",
+    currency: "BDT",
+    maximumFractionDigits: 2,
+  }).format(newBalance);
+
+  const html = `
+    <div style="font-family:Arial, sans-serif; max-width:600px; margin:0 auto; padding:20px; border:1px solid #e0e0e0; border-radius:8px; background-color:#f9f9f9;">
+      <div style="text-align:center; padding:15px; background-color:#4CAF50; color:white; border-radius:5px; margin-bottom:20px;">
+        <h2 style="margin:0;">Fund Request Approved</h2>
+      </div>
+      <p style="font-size:16px;">Hi <b>${playerName ?? "there"}</b>,</p>
+      <p style="font-size:16px;">Great news! Your fund request has been approved.</p>
+      <div style="background-color:white; padding:15px; border-radius:5px; margin:15px 0; border-left:4px solid #4CAF50;">
+        <p style="font-size:16px; margin-bottom:10px;">Amount Added: <b style="color:#4CAF50;">${formattedAmount}</b></p>
+        <p style="font-size:16px; margin-top:0;">Your New Balance: <b style="color:${newBalance < 0 ? "#e53935" : "#4CAF50"};">${formattedBalance}</b></p>
+      </div>
+      <p style="font-size:16px;">You can view your updated balance and transactions in your dashboard.</p>
+      <div style="text-align:center; margin:25px 0;">
+        <a href="https://penalty-merchants.vercel.app/" style="background-color:#4CAF50; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; font-weight:bold;">View Dashboard</a>
+      </div>
+      <div style="border-top:1px solid #e0e0e0; padding-top:15px; margin-top:20px; text-align:center; color:#757575; font-size:14px;">
+        <p>— Penalty Merchants</p>
+        <a href="https://penalty-merchants.vercel.app/" style="color:#4CAF50; text-decoration:none;">penalty-merchants.vercel.app</a>
+      </div>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM!,
+    to,
+    subject,
+    html,
+  });
+}
