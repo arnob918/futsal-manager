@@ -4,6 +4,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { BkashAccordion } from "./BkashAccordion";
+import { BankAccordion } from "./BankAccordion";
 
 type FundRequest = {
   id: string;
@@ -190,8 +191,8 @@ export default function FundsView({
                   pending
                     ? "Submitting…"
                     : !amount || Number(amount) <= 0 || !channel
-                    ? "Fill required fields"
-                    : "Submit request"
+                      ? "Fill required fields"
+                      : "Submit request"
                 }
               >
                 {pending && <Spinner />}
@@ -332,8 +333,8 @@ export default function FundsView({
                           !item.isTransaction
                             ? "text-amber-600"
                             : item.amount > 0
-                            ? "text-green-600"
-                            : "text-red-600"
+                              ? "text-green-600"
+                              : "text-red-600"
                         }`}
                       >
                         {formatTaka(item.amount)}
@@ -366,7 +367,15 @@ export default function FundsView({
           </div>
         </section>
       </div>
-      <BkashAccordion bkashNumber="01875782911" />
+      <div className="fixed bottom-3 left-3 right-3 z-50 flex items-end gap-2 sm:bottom-4 sm:left-auto sm:right-4 sm:w-auto">
+        <BkashAccordion bkashNumber="01875782911" />
+        <BankAccordion
+          bankName="Prime Bank"
+          accountNumber="2165215017043"
+          accountHolder="Md. Shoriful Islam"
+          branchName="Bashundhara Branch"
+        />
+      </div>
     </div>
   );
 }

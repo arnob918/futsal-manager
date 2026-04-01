@@ -53,7 +53,7 @@ export function BkashAccordion({
   };
 
   return (
-    <div className="fixed bottom-3 left-3 right-3 z-50 sm:left-auto sm:right-4 sm:w-80 sm:bottom-4">
+    <div className="flex-1 min-w-0 sm:w-64">
       {/* Accordion Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -116,7 +116,7 @@ export function BkashAccordion({
           </div>
 
           {/* QR Code */}
-          <div className="hidden sm:flex border-t pt-3 sm:pt-4">
+          <div className="hidden sm:flex flex-col border-t pt-3 sm:pt-4">
             <p className="text-xs text-gray-600 mb-2 text-center">
               Or scan QR code in bKash app
             </p>
