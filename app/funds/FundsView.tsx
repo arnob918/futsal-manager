@@ -44,6 +44,9 @@ export default function FundsView({
   channels: string[];
 }) {
   const router = useRouter();
+  const [openAccordion, setOpenAccordion] = React.useState<
+    "bkash" | "bank" | null
+  >(null);
   const [amount, setAmount] = React.useState<string>("");
   const [channel, setChannel] = React.useState<string>("");
   const [userNote, setUserNote] = React.useState<string>("");
@@ -368,13 +371,45 @@ export default function FundsView({
         </section>
       </div>
       <div className="fixed bottom-3 left-3 right-3 z-50 flex items-end gap-2 sm:bottom-4 sm:left-auto sm:right-4 sm:w-auto">
-        <BkashAccordion bkashNumber="01875782911" />
-        <BankAccordion
-          bankName="Prime Bank"
-          accountNumber="2165215017043"
-          accountHolder="Md. Shoriful Islam"
-          branchName="Bashundhara Branch"
-        />
+        <div
+          className={`transition-all duration-300 min-w-0 sm:flex-none sm:w-64 ${
+            openAccordion === "bkash"
+              ? "basis-3/4"
+              : openAccordion === "bank"
+                ? "basis-1/4"
+                : "basis-1/2"
+          }`}
+        >
+          <BkashAccordion
+            bkashNumber="01875782911"
+            isOpen={openAccordion === "bkash"}
+            onToggle={() =>
+              setOpenAccordion((prev) => (prev === "bkash" ? null : "bkash"))
+            }
+            isCollapsed={openAccordion === "bank"}
+          />
+        </div>
+        <div
+          className={`transition-all duration-300 min-w-0 sm:flex-none sm:w-64 ${
+            openAccordion === "bank"
+              ? "basis-3/4"
+              : openAccordion === "bkash"
+                ? "basis-1/4"
+                : "basis-1/2"
+          }`}
+        >
+          <BankAccordion
+            bankName="Prime Bank"
+            accountNumber="2165215017043"
+            accountHolder="Md. Shoriful Islam"
+            branchName="Bashundhara Branch"
+            isOpen={openAccordion === "bank"}
+            onToggle={() =>
+              setOpenAccordion((prev) => (prev === "bank" ? null : "bank"))
+            }
+            isCollapsed={openAccordion === "bkash"}
+          />
+        </div>
       </div>
     </div>
   );

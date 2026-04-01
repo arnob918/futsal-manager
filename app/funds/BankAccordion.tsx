@@ -7,9 +7,10 @@ import { ChevronUp, Copy, Check, Landmark } from "lucide-react";
 interface CopyButtonProps {
   text: string;
   label?: string;
+  colorClass?: string;
 }
 
-function CopyButton({ text, label }: CopyButtonProps) {
+function CopyButton({ text, label, colorClass = "blue" }: CopyButtonProps) {
   const [copied, setCopied] = React.useState(false);
 
   const handleCopy = async () => {
@@ -52,7 +53,7 @@ function CopyButton({ text, label }: CopyButtonProps) {
       {copied ? (
         <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
       ) : (
-        <Copy className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+        <Copy className={`h-4 w-4 sm:h-5 sm:w-5 text-${colorClass}-600`} />
       )}
     </button>
   );
@@ -63,6 +64,10 @@ interface BankAccordionProps {
   accountNumber: string;
   accountHolder: string;
   branchName: string;
+  // Controlled props for coordinated mobile behaviour
+  isOpen?: boolean;
+  onToggle?: () => void;
+  isCollapsed?: boolean; // mobile: the other accordion is open
 }
 
 export function BankAccordion({
@@ -70,34 +75,53 @@ export function BankAccordion({
   accountNumber,
   accountHolder,
   branchName,
+  isOpen: controlledOpen,
+  onToggle,
+  isCollapsed = false,
 }: BankAccordionProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [localOpen, setLocalOpen] = React.useState(false);
+
+  const isOpen = controlledOpen !== undefined ? controlledOpen : localOpen;
+  const handleToggle = onToggle ?? (() => setLocalOpen((v) => !v));
 
   return (
-    <div className="flex-1 min-w-0 sm:w-64">
+    <div className="w-full">
       {/* Accordion Header */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between gap-2 rounded-t-xl bg-blue-700 px-3 py-2.5 text-white shadow-lg hover:bg-blue-800 transition-colors sm:px-4 sm:py-3"
+        onClick={handleToggle}
+        className={`flex w-full items-center bg-blue-700 px-3 py-2.5 text-white shadow-lg hover:bg-blue-800 transition-colors sm:px-4 sm:py-3 ${
+          isCollapsed
+            ? "justify-center rounded-xl"
+            : "justify-between gap-2 rounded-t-xl"
+        } ${!isOpen && !isCollapsed ? "rounded-b-xl" : ""}`}
         type="button"
+        title="Bank Transfer"
       >
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center ${isCollapsed ? "" : "gap-2"}`}>
           <Landmark className="w-5 h-5 shrink-0" />
-          <span className="font-semibold text-sm sm:text-base">
+          {/* Hide label when collapsed on mobile */}
+          <span
+            className={`font-semibold text-sm sm:text-base whitespace-nowrap overflow-hidden transition-all duration-300 ${
+              isCollapsed
+                ? "w-0 opacity-0 sm:w-auto sm:opacity-100 sm:ml-2"
+                : "ml-0"
+            }`}
+          >
             Bank Transfer
           </span>
         </div>
+        {/* Hide chevron when collapsed on mobile */}
         <ChevronUp
-          className={`h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 ${
+          className={`h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 shrink-0 ${
             isOpen ? "rotate-180" : ""
-          }`}
+          } ${isCollapsed ? "hidden sm:block" : ""}`}
         />
       </button>
 
       {/* Accordion Content */}
       <div
-        className={`overflow-hidden rounded-b-xl bg-white shadow-lg transition-all duration-200 ${
-          isOpen ? "max-h-[500px] border-x border-b" : "max-h-0"
+        className={`overflow-hidden rounded-b-xl bg-white shadow-lg transition-all duration-300 ${
+          isOpen && !isCollapsed ? "max-h-[500px] border-x border-b" : "max-h-0"
         }`}
       >
         <div className="p-3 space-y-3 sm:p-4 sm:space-y-4">
