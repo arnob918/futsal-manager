@@ -165,7 +165,7 @@ export default function FundsView({
                 ))}
               </select>
               <span className="text-xs text-muted-foreground">
-                Choose one: Bank, Bkash, Rocket, Nagad, or Other.
+                Choose one: Bank, Bkash, Cash or Other.
               </span>
             </label>
 

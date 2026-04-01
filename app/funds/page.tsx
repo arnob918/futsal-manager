@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import FundsView from "./FundsView";
 import { revalidatePath } from "next/cache";
 
-const CHANNELS = ["Bank", "Bkash", "Rocket", "Nagad", "Other"] as const;
+const CHANNELS = ["Bank", "Bkash", "Cash", "Other"] as const;
 
 export default async function Funds() {
   const session = await getServerSession(authOptions);
