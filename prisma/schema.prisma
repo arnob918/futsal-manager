@@ -28,6 +28,18 @@ enum FundStatus {
   REJECTED
 }
 
+enum Position {
+  GOALKEEPER
+  DEFENDER
+  MIDFIELDER
+  FORWARD
+}
+
+enum Team {
+  A
+  B
+}
+
 model User {
   id            String    @id @default(cuid())
   createdAt     DateTime  @default(now())
@@ -46,6 +58,7 @@ model User {
   fundRequests   FundRequest[]
   matchesHosted  Match[]            @relation("MatchPayer")
   participations MatchParticipant[]
+  skills         PlayerSkill[]
 
   @@index([role])
   @@index([createdAt])
@@ -107,10 +120,12 @@ model Match {
 }
 
 model MatchParticipant {
-  id      String @id @default(cuid())
-  matchId String
-  userId  String
-  guests  Int    @default(0)
+  id       String    @id @default(cuid())
+  matchId  String
+  userId   String
+  guests   Int       @default(0)
+  team     Team? // assigned team for this match
+  position Position? // assigned slot (GOALKEEPER for keepers; best position for others)
 
   match Match @relation(fields: [matchId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -118,6 +133,18 @@ model MatchParticipant {
   @@unique([matchId, userId])
   @@index([userId])
   @@index([matchId])
+}
+
+model PlayerSkill {
+  id       String   @id @default(cuid())
+  userId   String
+  position Position
+  score    Int      @default(5) // 1-10
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, position])
+  @@index([userId])
 }
 
 model Transaction {

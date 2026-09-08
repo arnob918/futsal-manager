@@ -10,6 +10,7 @@ type Match = {
   location: string | null;
   totalCost: number;
   settled: boolean;
+  participantIds?: string[]; // saved lineup (from team builder), pre-selected
 };
 
 type UserRow = {
@@ -39,9 +40,12 @@ export default function SettleForm({
   const [error, setError] = React.useState<string>("");
   const [success, setSuccess] = React.useState<string>("");
 
+  // Pre-select the match's saved participants (e.g. from the team builder)
   React.useEffect(() => {
-    console.log("pending:", pending);
-  }, [pending]);
+    const ids = matches.find((m) => m.id === matchId)?.participantIds ?? [];
+    setSelected(new Set(ids));
+    setGuests({});
+  }, [matchId, matches]);
 
   // Filter users by search query (name/email)
   const filteredUsers = React.useMemo(() => {

@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, DollarSign, Calendar, CheckCircle, Wallet, Mail } from "lucide-react";
+import { Users, DollarSign, Calendar, CheckCircle, Wallet, Mail, Star, Shuffle } from "lucide-react";
 
 export default async function Admin() {
   const session = await getServerSession(authOptions);
@@ -109,6 +109,44 @@ export default async function Admin() {
                   </h3>
                   <p className="text-sm text-slate-600">
                     View and manage all user account balances
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Player Ratings */}
+          <Link href="/admin/ratings">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-rose-300 transition-all group cursor-pointer">
+              <div className="flex items-start gap-4">
+                <div className="bg-rose-100 p-3 rounded-lg group-hover:bg-rose-200 transition-colors">
+                  <Star className="w-6 h-6 text-rose-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-1">
+                    Player Ratings
+                  </h3>
+                  <p className="text-sm text-slate-600">
+                    Score players per position for team balancing
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Team Builder */}
+          <Link href="/admin/teams">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md hover:border-teal-300 transition-all group cursor-pointer">
+              <div className="flex items-start gap-4">
+                <div className="bg-teal-100 p-3 rounded-lg group-hover:bg-teal-200 transition-colors">
+                  <Shuffle className="w-6 h-6 text-teal-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-1">
+                    Team Builder
+                  </h3>
+                  <p className="text-sm text-slate-600">
+                    Generate two balanced teams for an upcoming match
                   </p>
                 </div>
               </div>

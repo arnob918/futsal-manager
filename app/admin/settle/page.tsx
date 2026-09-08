@@ -24,6 +24,7 @@ export default async function SettlePage() {
       location: true,
       totalCost: true,
       settled: true,
+      participants: { select: { userId: true } },
     },
   });
 
@@ -87,6 +88,7 @@ export default async function SettlePage() {
   const clientMatches = matches.map((m) => ({
     ...m,
     date: m.date.toISOString(),
+    participantIds: m.participants.map((p) => p.userId),
   }));
   const clientUsers = users.map((u) => ({
     id: u.id,

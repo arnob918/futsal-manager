@@ -13,6 +13,8 @@ type Participant = {
   id: string;
   userId: string;
   user: User;
+  team?: "A" | "B" | null;
+  position?: string | null;
 };
 
 type Match = {
@@ -346,28 +348,62 @@ function CardGrid({ matches }: { matches: (Match & { _date: Date })[] }) {
             </div>
           </div>
 
-          {/* Participants */}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {m.participants.slice(0, 6).map((p) => (
-              <div
-                key={p.id}
-                className="inline-flex items-center gap-2 rounded-full border px-2 py-1 text-xs"
-                title={p.user?.name ?? "Player"}
-              >
-                <div className="grid size-5 place-items-center rounded-full bg-muted text-[10px] font-bold">
-                  {getInitials(p.user?.name)}
+          {/* Participants — grouped by team when a lineup was saved */}
+          {m.participants.some((p) => p.team) ? (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {(["A", "B"] as const).map((team) => (
+                <div key={team} className="rounded-lg border p-2">
+                  <div className="mb-1 text-xs font-semibold text-muted-foreground">
+                    Team {team}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {m.participants
+                      .filter((p) => p.team === team)
+                      .map((p) => (
+                        <span
+                          key={p.id}
+                          className="inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
+                          title={`${p.user?.name ?? "Player"}${
+                            p.position === "GOALKEEPER" ? " (GK)" : ""
+                          }`}
+                        >
+                          <span className="truncate">
+                            {p.user?.name ?? "Player"}
+                          </span>
+                          {p.position === "GOALKEEPER" && (
+                            <span className="shrink-0 font-semibold text-amber-600">
+                              GK
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                  </div>
                 </div>
-                <span className="max-w-[10rem] truncate">
-                  {p.user?.name ?? "Player"}
+              ))}
+            </div>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {m.participants.slice(0, 6).map((p) => (
+                <div
+                  key={p.id}
+                  className="inline-flex items-center gap-2 rounded-full border px-2 py-1 text-xs"
+                  title={p.user?.name ?? "Player"}
+                >
+                  <div className="grid size-5 place-items-center rounded-full bg-muted text-[10px] font-bold">
+                    {getInitials(p.user?.name)}
+                  </div>
+                  <span className="max-w-[10rem] truncate">
+                    {p.user?.name ?? "Player"}
+                  </span>
+                </div>
+              ))}
+              {m.participants.length > 6 && (
+                <span className="inline-flex items-center rounded-full border px-2 py-1 text-xs text-muted-foreground">
+                  +{m.participants.length - 6} more
                 </span>
-              </div>
-            ))}
-            {m.participants.length > 6 && (
-              <span className="inline-flex items-center rounded-full border px-2 py-1 text-xs text-muted-foreground">
-                +{m.participants.length - 6} more
-              </span>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Hover affordance */}
           <div className="pointer-events-none mt-3 h-1 rounded bg-gradient-to-r from-transparent via-muted to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
