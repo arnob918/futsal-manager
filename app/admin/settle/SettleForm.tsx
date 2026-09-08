@@ -3,6 +3,23 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { Loader2, Minus, Plus } from "lucide-react";
+import { toast } from "sonner";
+
+import { Money } from "@/components/Money";
+import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { prettyDateTime } from "@/lib/format";
 
 type Match = {
   id: string;
@@ -36,12 +53,6 @@ export default function SettleForm({
   const [query, setQuery] = React.useState("");
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [pending, setPending] = React.useState(false);
-  const [error, setError] = React.useState<string>("");
-  const [success, setSuccess] = React.useState<string>("");
-
-  React.useEffect(() => {
-    console.log("pending:", pending);
-  }, [pending]);
 
   // Filter users by search query (name/email)
   const filteredUsers = React.useMemo(() => {
@@ -104,8 +115,6 @@ export default function SettleForm({
   }
 
   async function handleSubmit(formData: FormData) {
-    setError("");
-    setSuccess("");
     setPending(true);
     try {
       // Guard client-side
@@ -134,7 +143,9 @@ export default function SettleForm({
 
       const res = await action(cleanFormData);
       if (!res || (res as any).ok) {
-        setSuccess("Match settled successfully.");
+        toast.success("Match settled", {
+          description: "Balances have been updated.",
+        });
         // Reset + navigate to matches
         setTotalBDT("");
         setSelected(new Set());
@@ -142,43 +153,27 @@ export default function SettleForm({
         router.push("/admin/settle");
       }
     } catch (e: any) {
-      setError(e?.message || "Failed to settle match.");
+      toast.error("Couldn't settle the match", {
+        description: e?.message || "Failed to settle match.",
+      });
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <div className="flex justify-center px-3">
-      <div className="w-full max-w-5xl space-y-5">
-        <header className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Settle Match
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Choose a past match, select participants, and confirm the total.
-            </p>
-          </div>
-        </header>
+    <div className="space-y-6">
+      <PageHeader
+        title="Settle match"
+        description="Choose a past match, select participants and confirm the total."
+      />
 
-        {/* Alerts */}
-        {success && (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            {success}
-          </div>
-        )}
-        {error && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-            {error}
-          </div>
-        )}
-
-        <div className="relative rounded-xl border p-4 sm:p-6">
+      <Card className="relative">
+        <CardContent>
           {pending && (
             <div className="absolute inset-0 z-10 grid place-items-center rounded-xl bg-background/60 backdrop-blur-sm">
               <div className="flex items-center gap-2 text-sm">
-                <Spinner />
+                <Loader2 className="size-4 animate-spin" />
                 <span>Settling…</span>
               </div>
             </div>
@@ -194,73 +189,79 @@ export default function SettleForm({
             className="grid grid-cols-1 gap-4"
           >
             {/* Match */}
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">Match (past)</span>
-              <select
-                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
-                name="matchId"
-                required
-                value={matchId}
-                onChange={(e) => setMatchId(e.target.value)}
-              >
-                {matches.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {prettyDate(new Date(m.date))}{" "}
-                    {m.location ? `– ${m.location}` : ""}
-                    {m.settled ? " (Settled)" : ""}
-                  </option>
-                ))}
-              </select>
-              <span className="text-xs text-muted-foreground">
+            <div className="grid gap-2">
+              <Label htmlFor="matchId">Match (past)</Label>
+              <Select value={matchId} onValueChange={setMatchId}>
+                <SelectTrigger id="matchId" className="w-full">
+                  <SelectValue placeholder="Choose a match…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {matches.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {prettyDateTime(new Date(m.date))}
+                      {m.location ? ` – ${m.location}` : ""}
+                      {m.settled ? " (Settled)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
                 Only previous matches are listed (most recent first).
-              </span>
-            </label>
+              </p>
+            </div>
 
             {/* Total */}
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">Total Cost (BDT)</span>
-              <input
-                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
+            <div className="grid gap-2">
+              <Label htmlFor="totalBDT">Total cost (BDT)</Label>
+              <Input
+                id="totalBDT"
                 name="totalBDT"
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0.01"
                 required
                 value={totalBDT}
                 onChange={(e) => setTotalBDT(e.target.value)}
-                placeholder="e.g., 3600"
+                placeholder="e.g. 3600"
               />
-              <span className="text-xs text-muted-foreground">
-                Per head: <strong>{formatBDT(perHead)}</strong>{" "}
-                {count ? `(${totalHeads} heads: ${count} players + ${totalGuests} guests)` : ""}
-              </span>
-            </label>
+              <p className="text-xs text-muted-foreground">
+                Per head:{" "}
+                <span className="font-medium text-foreground">
+                  {perHead > 0 ? <Money amount={perHead} /> : "—"}
+                </span>{" "}
+                {count
+                  ? `(${totalHeads} heads: ${count} players + ${totalGuests} guests)`
+                  : ""}
+              </p>
+            </div>
 
             {/* Participant search + actions */}
             <div className="flex flex-col gap-2">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <label className="flex flex-1 items-center gap-2">
-                  <span className="text-sm font-medium">Search players</span>
-                </label>
+                <Label htmlFor="playerSearch">Search players</Label>
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={selectAllVisible}
-                    className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted"
                   >
                     Select shown
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={clearSelection}
-                    className="rounded-lg border px-3 py-1.5 text-sm hover:bg-muted"
                   >
                     Clear
-                  </button>
+                  </Button>
                 </div>
               </div>
-              <input
-                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
+              <Input
+                id="playerSearch"
+                type="search"
                 placeholder="Type name or email…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -308,21 +309,25 @@ export default function SettleForm({
                         >
                           <button
                             type="button"
-                            onClick={() => updateGuests(u.id, Math.max(0, guestCount - 1))}
-                            className="flex h-6 w-6 items-center justify-center rounded-l-md border-r hover:bg-muted disabled:opacity-50"
+                            onClick={() =>
+                              updateGuests(u.id, Math.max(0, guestCount - 1))
+                            }
+                            className="flex size-7 items-center justify-center rounded-l-md border-r transition-colors hover:bg-accent disabled:opacity-50"
                             disabled={guestCount <= 0}
+                            aria-label="Remove a guest"
                           >
-                            -
+                            <Minus className="size-3" />
                           </button>
-                          <div className="flex h-6 min-w-[2rem] items-center justify-center text-xs font-medium">
+                          <div className="flex h-7 min-w-8 items-center justify-center text-xs font-medium tabular-nums">
                             {guestCount}
                           </div>
                           <button
                             type="button"
                             onClick={() => updateGuests(u.id, guestCount + 1)}
-                            className="flex h-6 w-6 items-center justify-center rounded-r-md border-l hover:bg-muted"
+                            className="flex size-7 items-center justify-center rounded-r-md border-l transition-colors hover:bg-accent"
+                            aria-label="Add a guest"
                           >
-                            +
+                            <Plus className="size-3" />
                           </button>
                         </div>
                       </div>
@@ -338,58 +343,20 @@ export default function SettleForm({
             </div>
 
             {/* Submit */}
-            <div className="flex items-center justify-end">
-              <button
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 sm:h-10 sm:w-auto"
+            <div className="flex justify-end">
+              <Button
                 type="submit"
                 disabled={pending}
-                title={pending ? "Settling…" : "Settle"}
+                className="w-full sm:w-auto"
               >
-                {pending && <Spinner />}
-                {pending ? "Settling…" : "Settle"}
-              </button>
+                {pending && <Loader2 className="size-4 animate-spin" />}
+                {pending ? "Settling…" : "Settle match"}
+              </Button>
             </div>
           </form>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-function Spinner() {
-  return (
-    <span
-      className="inline-block size-4 animate-spin rounded-full border-[2px] border-muted-foreground border-t-transparent"
-      aria-hidden="true"
-    />
-  );
-}
-
-function prettyDate(d: Date) {
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
-}
-function shortDate(d: Date) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-  }).format(d);
-}
-function formatBDT(n: number) {
-  if (!Number.isFinite(n) || n <= 0) return "—";
-  try {
-    return new Intl.NumberFormat("en-BD", {
-      style: "currency",
-      currency: "BDT",
-      maximumFractionDigits: 2,
-    }).format(n);
-  } catch {
-    return `${n.toFixed(2)}৳`;
-  }
-}

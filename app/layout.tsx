@@ -1,13 +1,24 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/Toaster";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import Image from "next/image";
 import SignInButton from "./signin/sign-in-btn";
 import NextTopLoader from "nextjs-toploader";
 import BottomNav from "@/components/BottomNav";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { Metadata, Viewport } from "next";
 
@@ -35,10 +46,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#10B981",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#252525" },
+  ],
 };
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export default async function RootLayout({
   children,
@@ -50,110 +64,110 @@ export default async function RootLayout({
   const image = session?.user?.image;
   const name = session?.user?.name;
 
+  const navLinks = [
+    { href: "/dashboard", label: "Home" },
+    { href: "/matches", label: "Matches" },
+    ...(role === "ADMIN"
+      ? [{ href: "/admin", label: "Admin" }]
+      : [{ href: "/funds", label: "Funds" }]),
+    { href: "/about", label: "About" },
+  ];
+
   return (
-    <html lang="en">
-      <body className={`${inter.className} min-h-dvh bg-muted/30 text-foreground`}>
-        <NextTopLoader color="#10B981" height={3} showSpinner={false} />
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body className="min-h-dvh bg-muted/30 font-sans text-foreground antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <NextTopLoader color="#10B981" height={3} showSpinner={false} />
 
-        <nav className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pt-[env(safe-area-inset-top)]">
-          <div className="flex h-14 items-center gap-2 px-4 sm:gap-4">
-            <Link
-              href="/"
-              className="font-semibold tracking-tight hover:text-primary transition-colors"
-            >
-              Penalty Merchants
-            </Link>
+          <header className="fixed inset-x-0 top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pt-[env(safe-area-inset-top)]">
+            <div className="flex h-14 items-center gap-2 px-4 sm:gap-6">
+              <Link
+                href="/"
+                className="font-semibold tracking-tight transition-colors hover:text-primary"
+              >
+                Penalty Merchants
+              </Link>
 
-            {session ? (
-              <>
-                {/* Desktop links — on mobile these live in the bottom tab bar */}
-                <div className="hidden md:flex md:items-center md:gap-4">
-                  <Link
-                    href="/dashboard"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="/matches"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Matches
-                  </Link>
-                  {role !== "ADMIN" && (
-                    <Link
-                      href="/funds"
-                      className="hover:text-primary transition-colors"
-                    >
-                      Funds
-                    </Link>
-                  )}
-                  {role === "ADMIN" && (
-                    <Link
-                      href="/admin"
-                      className="hover:text-primary transition-colors"
-                    >
-                      Admin
-                    </Link>
-                  )}
-                  <Link
-                    href="/about"
-                    className="hover:text-primary transition-colors"
-                  >
-                    About
-                  </Link>
-                </div>
+              {session ? (
+                <>
+                  {/* Desktop links — on mobile these live in the bottom tab bar */}
+                  <nav className="hidden items-center gap-1 md:flex">
+                    {navLinks.map(({ href, label }) => (
+                      <Button key={href} variant="ghost" size="sm" asChild>
+                        <Link href={href}>{label}</Link>
+                      </Button>
+                    ))}
+                  </nav>
 
-                {/* Desktop profile dropdown — mobile uses the "Me" drawer */}
-                <div className="ml-auto relative group hidden md:block">
-                  <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                    {image ? (
-                      <Image
-                        src={image}
-                        alt={name || "Profile"}
-                        width={36}
-                        height={36}
-                        className="rounded-full border-2 border-border"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                        <span className="text-muted-foreground font-semibold text-sm">
-                          {name?.charAt(0).toUpperCase() || "U"}
-                        </span>
-                      </div>
-                    )}
-                  </button>
-                  <div className="hidden group-focus-within:block absolute right-0 mt-2 w-48 bg-popover text-popover-foreground border rounded-lg shadow-lg z-50">
-                    {name && (
-                      <div className="px-4 py-2 border-b text-sm font-semibold">
-                        {name}
-                      </div>
-                    )}
-                    <form action="/api/auth/signout" method="post">
-                      <button
-                        className="w-full text-left px-4 py-2 hover:bg-accent text-destructive rounded-b-lg"
-                        type="submit"
-                      >
-                        Sign out
-                      </button>
-                    </form>
+                  <div className="ml-auto flex items-center gap-1">
+                    <div className="hidden md:block">
+                      <ThemeToggle />
+                    </div>
+
+                    {/* Desktop account menu — mobile uses the "Me" drawer */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild className="hidden md:flex">
+                        <button
+                          className="rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                          aria-label="Account menu"
+                        >
+                          <Avatar className="size-9">
+                            {image && <AvatarImage src={image} alt="" />}
+                            <AvatarFallback>
+                              {name?.charAt(0).toUpperCase() || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-52">
+                        {name && (
+                          <>
+                            <DropdownMenuLabel>{name}</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
+                        {role === "ADMIN" && (
+                          <DropdownMenuItem asChild>
+                            <Link href="/funds">Funds</Link>
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem asChild variant="destructive">
+                          <form
+                            action="/api/auth/signout"
+                            method="post"
+                            className="w-full"
+                          >
+                            <button type="submit" className="w-full text-left">
+                              Sign out
+                            </button>
+                          </form>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
+                </>
+              ) : (
+                <div className="ml-auto flex items-center gap-1">
+                  <ThemeToggle />
+                  <SignInButton />
                 </div>
+              )}
+            </div>
+          </header>
 
-              </>
-            ) : (
-              <SignInButton />
-            )}
-          </div>
-        </nav>
+          {/* Top offset clears the fixed header; bottom offset clears the tab bar. */}
+          <main className="mx-auto max-w-6xl p-4 pt-[calc(3.5rem+1rem+env(safe-area-inset-top))] pb-[calc(3.5rem+1rem+env(safe-area-inset-bottom))] sm:p-6 sm:pt-[calc(3.5rem+1.5rem+env(safe-area-inset-top))] md:pb-6">
+            {children}
+          </main>
 
-        {/* Top offset clears the fixed nav; bottom offset clears the tab bar. */}
-        <main className="mx-auto p-4 pt-[calc(3.5rem+1rem+env(safe-area-inset-top))] pb-[calc(3.5rem+1rem+env(safe-area-inset-bottom))] sm:p-6 sm:pt-[calc(3.5rem+1.5rem+env(safe-area-inset-top))] md:pb-6">
-          {children}
-        </main>
-
-        {session && <BottomNav role={role} name={name} image={image} />}
-        <Toaster />
+          {session && <BottomNav role={role} name={name} image={image} />}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

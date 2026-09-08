@@ -1,11 +1,32 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
-import { Loader2, Mail } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, Loader2, Mail, Search } from "lucide-react";
 import { toast } from "sonner";
+
 import { sendNegativeBalanceEmailAction } from "@/app/(actions)/emailActions";
+import { Money } from "@/components/Money";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { getInitials } from "@/lib/format";
 
 type User = {
   id: string;
@@ -88,15 +109,14 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
       {/* Search + count. Stacks on phones so neither element gets squeezed. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
-          <input
-            type="text"
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name or email..."
-            // text-base avoids iOS Safari zooming the page on focus
-            className="h-11 w-full rounded-lg border bg-background px-3 py-2 pl-9 text-base sm:h-10 sm:text-sm"
+            placeholder="Search by name or email…"
+            className="h-11 pl-9 sm:h-9"
           />
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         </div>
 
         <div className="flex items-center justify-between gap-3 sm:justify-end">
@@ -104,22 +124,28 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
             {users.length} {users.length === 1 ? "member" : "members"}
           </span>
           {/* The sortable table headers are hidden on mobile, so offer sorting here. */}
-          <select
-            aria-label="Sort members"
+          <Select
             value={`${sortField}:${sortDir}`}
-            onChange={(e) => {
-              const [f, d] = e.target.value.split(":");
+            onValueChange={(v) => {
+              const [f, d] = v.split(":");
               setSortField(f as SortField);
               setSortDir(d as SortDir);
             }}
-            className="h-11 rounded-lg border bg-background px-2 text-sm md:hidden"
           >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              aria-label="Sort members"
+              className="h-11 md:hidden"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -128,7 +154,8 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
         {users.map((user) => {
           const negative = (user.balance ?? 0) < 0;
           return (
-            <div key={user.id} className="rounded-lg border p-3">
+            <Card key={user.id} className="gap-0 py-3">
+              <CardContent className="px-3">
               <div className="flex items-start gap-3">
                 <MemberAvatar user={user} />
                 <Link
@@ -148,33 +175,31 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
               <div className="mt-3 flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
                 <span>{user.participations.length} matches</span>
                 <span>{user.transactions.length} txns</span>
-                <span
-                  className={
-                    negative
-                      ? "font-medium text-rose-600"
-                      : "font-medium text-foreground"
-                  }
-                >
-                  {formatBDT(user.balance ?? 0)}
+                <span className="font-medium">
+                  <Money amount={user.balance ?? 0} tone="sign" />
                 </span>
               </div>
-            </div>
+              </CardContent>
+            </Card>
           );
         })}
 
         {users.length === 0 && (
-          <p className="rounded-lg border py-6 text-center text-sm text-muted-foreground">
-            No members found.
-          </p>
+          <Card>
+            <CardContent>
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                No members found.
+              </p>
+            </CardContent>
+          </Card>
         )}
       </div>
 
       {/* Desktop: full table */}
-      <div className="hidden rounded-lg border md:block">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted/50">
+      <Card className="hidden overflow-hidden py-0 md:block">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
                 <SortHeader
                   field="name"
                   current={sortField}
@@ -218,15 +243,13 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                 >
                   Balance
                 </SortHeader>
-                <th className="py-3 px-4 text-right text-sm font-medium text-muted-foreground">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
               {users.map((user) => (
-                <tr key={user.id} className="border-b last:border-0">
-                  <td className="py-3 px-4">
+                <TableRow key={user.id}>
+                  <TableCell>
                     <Link href={`/admin/balances/${user.id}`}>
                       <div className="flex items-center gap-3">
                         <MemberAvatar user={user} />
@@ -237,72 +260,52 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                         </div>
                       </div>
                     </Link>
-                  </td>
-                  <td className="py-3 px-4 text-sm text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
                     {user.email ?? "—"}
-                  </td>
-                  <td className="py-3 px-4 text-right text-sm text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">
                     {user.participations.length}
-                  </td>
-                  <td className="py-3 px-4 text-right text-sm text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">
                     {user.transactions.length}
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <span
-                      className={`font-medium ${
-                        (user.balance ?? 0) < 0 ? "text-rose-600" : ""
-                      }`}
-                    >
-                      {formatBDT(user.balance ?? 0)}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    <Money amount={user.balance ?? 0} tone="sign" />
+                  </TableCell>
+                  <TableCell className="text-right">
                     {(user.balance ?? 0) < 0 && (
                       <SendReminderButton userId={user.id} />
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
 
               {users.length === 0 && (
-                <tr>
-                  <td
+                <TableRow>
+                  <TableCell
                     colSpan={6}
-                    className="py-4 text-center text-sm text-muted-foreground"
+                    className="py-6 text-center text-muted-foreground"
                   >
                     No members found.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }
 
 function MemberAvatar({ user }: { user: User }) {
-  if (user.image) {
-    return (
-      <Image
-        src={user.image}
-        alt={user.name ?? user.email ?? "User"}
-        width={32}
-        height={32}
-        className="size-8 shrink-0 rounded-full"
-      />
-    );
-  }
   return (
-    <div className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-xs font-medium">
-      {(user.name || user.email || "?")
-        .split(" ")
-        .map((s) => s?.[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase()}
-    </div>
+    <Avatar className="size-8 shrink-0">
+      {user.image && <AvatarImage src={user.image} alt="" />}
+      <AvatarFallback className="text-xs">
+        {getInitials(user.name ?? user.email)}
+      </AvatarFallback>
+    </Avatar>
   );
 }
 
@@ -322,53 +325,22 @@ function SortHeader({
   align?: "left" | "right";
 }) {
   const active = current === field;
+  const Icon = !active ? ChevronsUpDown : dir === "asc" ? ArrowUp : ArrowDown;
+
   return (
-    <th
-      className={`py-3 px-4 text-sm font-medium text-muted-foreground ${
-        align === "right" ? "text-right" : "text-left"
-      }`}
-    >
+    <TableHead className={align === "right" ? "text-right" : undefined}>
       <button
         type="button"
         onClick={() => onSort(field)}
-        className="inline-flex items-center gap-1 hover:text-foreground"
+        className={`inline-flex items-center gap-1 transition-colors hover:text-foreground ${
+          active ? "text-foreground" : ""
+        }`}
       >
         {children}
-        <span className="text-xs">
-          {active ? (dir === "asc" ? "↑" : "↓") : "↕"}
-        </span>
+        <Icon className="size-3.5" />
       </button>
-    </th>
+    </TableHead>
   );
-}
-
-function SearchIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      className={`size-4 ${className}`}
-    >
-      <path
-        fillRule="evenodd"
-        d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
-
-function formatBDT(n: number) {
-  try {
-    return new Intl.NumberFormat("en-BD", {
-      style: "currency",
-      currency: "BDT",
-      maximumFractionDigits: 2,
-    }).format(n);
-  } catch {
-    return `${n.toFixed(2)}৳`;
-  }
 }
 
 function SendReminderButton({ userId }: { userId: string }) {
@@ -383,7 +355,7 @@ function SendReminderButton({ userId }: { userId: string }) {
       } else {
         toast.error(result.error);
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setIsSending(false);
@@ -391,18 +363,21 @@ function SendReminderButton({ userId }: { userId: string }) {
   };
 
   return (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
       onClick={handleSend}
       disabled={isSending}
-      title="Send Reminder Email"
+      title="Send reminder email"
       aria-label="Send reminder email"
-      className="inline-flex size-10 shrink-0 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-rose-600 md:size-8"
+      className="size-10 shrink-0 text-destructive hover:text-destructive md:size-8"
     >
       {isSending ? (
         <Loader2 className="size-4 animate-spin" />
       ) : (
         <Mail className="size-4" />
       )}
-    </button>
+    </Button>
   );
 }

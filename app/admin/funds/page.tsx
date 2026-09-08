@@ -1,10 +1,14 @@
-import Image from "next/image";
-import ActionButtons from "./ActionButtons";
-import { prisma } from "@/lib/db";
-import { approveFund, rejectFund } from "@/app/(actions)/fundActions";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+
+import ActionButtons from "./ActionButtons";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { getInitials, prettyDateTime } from "@/lib/format";
+import { Money } from "@/components/Money";
+import { PageHeader } from "@/components/PageHeader";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function AdminFunds() {
   const session = await getServerSession(authOptions);
@@ -18,111 +22,75 @@ export default async function AdminFunds() {
     orderBy: { createdAt: "asc" },
   });
 
-  async function approve(formData: FormData) {
-    "use server";
-    const id = formData.get("id") as string;
-    await approveFund(id);
-  }
-
-  async function reject(formData: FormData) {
-    "use server";
-    const id = formData.get("id") as string;
-    await rejectFund(id);
-  }
-
   return (
-    <div className="space-y-3">
-      <h1 className="text-2xl font-semibold">Fund Requests</h1>
+    <div className="space-y-6">
+      <PageHeader
+        title="Fund requests"
+        description={
+          pending.length === 0
+            ? "Nothing waiting on you right now."
+            : `${pending.length} request${pending.length === 1 ? "" : "s"} awaiting approval.`
+        }
+      />
 
       {pending.length === 0 ? (
-        <div className="rounded-lg border p-4 text-sm text-muted-foreground">
-          No pending requests
-        </div>
+        <Card>
+          <CardContent>
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No pending requests
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <ul className="space-y-3">
-          {pending.map((r: any) => (
-            <li
-              key={r.id}
-              className="border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            >
-              <div className="flex items-start gap-4 sm:items-center">
-                <div className="shrink-0">
-                  {r.user?.image ? (
-                    <Image
-                      src={r.user.image}
-                      alt={r.user?.name ?? r.user?.email ?? "user"}
-                      width={44}
-                      height={44}
-                      className="rounded-full"
-                    />
-                  ) : (
-                    <div className="rounded-full bg-muted w-11 h-11 grid place-items-center text-sm font-medium text-foreground">
-                      {(r.user?.name || r.user?.email || "?")
-                        .split(" ")
-                        .map((s: string) => s?.[0])
-                        .slice(0, 2)
-                        .join("") || "?"}
+          {pending.map((r) => (
+            <li key={r.id}>
+              <Card>
+                <CardContent className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="size-11">
+                      {r.user?.image && <AvatarImage src={r.user.image} alt="" />}
+                      <AvatarFallback>
+                        {getInitials(r.user?.name ?? r.user?.email)}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-sm font-medium">
+                        {r.user?.name ?? r.user?.email ?? "User"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {r.user?.email}
+                      </p>
+                      {r.note && <p className="text-sm">{r.note}</p>}
+                      <p className="text-xs text-muted-foreground">
+                        Requested {prettyDateTime(new Date(r.createdAt))}
+                      </p>
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                <div>
-                  <div className="text-sm font-medium">
-                    {r.user?.name ?? r.user?.email ?? "User"}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {r.user?.email}
-                  </div>
-                  <div className="text-sm text-muted-foreground mt-1">{r.note}</div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Requested: {prettyDate(new Date(r.createdAt))}
-                  </div>
-                </div>
-              </div>
+                  <div className="flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-center sm:border-0 sm:pt-0">
+                    {/* Phone: amount reads as a labelled row. Desktop: right-aligned block. */}
+                    <div className="flex items-baseline justify-between gap-2 sm:block sm:shrink-0 sm:text-right">
+                      <span className="text-xs text-muted-foreground sm:hidden">
+                        Amount
+                      </span>
+                      <p className="text-lg font-semibold">
+                        <Money amount={r.amount} />
+                      </p>
+                      <p className="hidden text-xs text-muted-foreground sm:block">
+                        Amount
+                      </p>
+                    </div>
 
-              <div className="flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-center sm:border-0 sm:pt-0">
-                {/* Phone: amount reads as a labelled row. Desktop: right-aligned block. */}
-                <div className="flex items-baseline justify-between gap-2 sm:block sm:shrink-0 sm:text-right">
-                  <span className="text-xs text-muted-foreground sm:hidden">
-                    Amount
-                  </span>
-                  <div className="text-lg font-semibold tabular-nums">
-                    {formatBDT(r.amount)}
+                    <ActionButtons id={r.id} />
                   </div>
-                  <div className="hidden text-xs text-muted-foreground sm:block">
-                    Amount
-                  </div>
-                </div>
-
-                {/* Client-side action buttons that call API routes and refresh the page */}
-                <ActionButtons id={r.id} />
-              </div>
+                </CardContent>
+              </Card>
             </li>
           ))}
         </ul>
       )}
     </div>
   );
-}
-
-function formatBDT(n: number) {
-  try {
-    return new Intl.NumberFormat("en-BD", {
-      style: "currency",
-      currency: "BDT",
-      maximumFractionDigits: 2,
-    }).format(n);
-  } catch {
-    return `${n.toFixed(2)}৳`;
-  }
-}
-
-function prettyDate(d: Date) {
-  return new Intl.DateTimeFormat("en-GB", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
 }

@@ -2,16 +2,22 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
 
 export default function ActionButtons({ id }: { id: string }) {
   const router = useRouter();
-  const [pending, setPending] = React.useState(false);
+  const [pending, setPending] = React.useState<"approve" | "reject" | null>(
+    null
+  );
 
-  async function runAction(endpoint: string) {
+  async function runAction(action: "approve" | "reject") {
     if (pending) return;
-    setPending(true);
+    setPending(action);
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch(`/api/admin/funds/${action}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
@@ -19,32 +25,37 @@ export default function ActionButtons({ id }: { id: string }) {
       if (!res.ok) throw new Error("Request failed");
       // Refresh the current route so server components re-run and reflect changes
       router.refresh();
+      toast.success(action === "approve" ? "Request approved" : "Request rejected");
     } catch (e) {
       console.error(e);
-      // Optionally show a toast here
+      toast.error("Couldn't update the request", {
+        description: "Please try again.",
+      });
     } finally {
-      setPending(false);
+      setPending(null);
     }
   }
 
   return (
     <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
-      <button
+      <Button
         type="button"
-        disabled={pending}
-        onClick={() => runAction("/api/admin/funds/approve")}
-        className="h-11 w-full rounded bg-primary px-3 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 sm:h-10 sm:w-auto"
+        disabled={pending !== null}
+        onClick={() => runAction("approve")}
       >
-        {pending ? "Working…" : "Approve"}
-      </button>
-      <button
+        {pending === "approve" && <Loader2 className="size-4 animate-spin" />}
+        Approve
+      </Button>
+      <Button
         type="button"
-        disabled={pending}
-        onClick={() => runAction("/api/admin/funds/reject")}
-        className="h-11 w-full rounded border border-rose-200 px-3 text-rose-700 transition-colors hover:bg-rose-50 disabled:opacity-50 sm:h-10 sm:w-auto"
+        variant="outline"
+        className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+        disabled={pending !== null}
+        onClick={() => runAction("reject")}
       >
-        {pending ? "Working…" : "Reject"}
-      </button>
+        {pending === "reject" && <Loader2 className="size-4 animate-spin" />}
+        Reject
+      </Button>
     </div>
   );
 }

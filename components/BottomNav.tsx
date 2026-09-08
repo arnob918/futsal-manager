@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Home, Users, Wallet, Shield, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,6 +14,8 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type Props = {
   role?: string;
@@ -72,13 +73,12 @@ export default function BottomNav({ role, name, image }: Props) {
             className={cn(tabClass, "text-muted-foreground hover:text-foreground")}
           >
             {image ? (
-              <Image
-                src={image}
-                alt=""
-                width={20}
-                height={20}
-                className="size-5 rounded-full border"
-              />
+              <Avatar className="size-5">
+                <AvatarImage src={image} alt="" />
+                <AvatarFallback>
+                  <User className="size-3" />
+                </AvatarFallback>
+              </Avatar>
             ) : (
               <User className="size-5" />
             )}
@@ -96,6 +96,13 @@ export default function BottomNav({ role, name, image }: Props) {
             <Separator />
 
             <div className="flex flex-col gap-1 p-4">
+              <div className="pb-2">
+                <p className="pb-2 text-xs font-medium text-muted-foreground">
+                  Appearance
+                </p>
+                <ThemeToggle variant="inline" />
+              </div>
+
               <Button variant="ghost" className="justify-start h-11" asChild>
                 <Link href="/about">About</Link>
               </Button>

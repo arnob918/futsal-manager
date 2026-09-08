@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import UsersTable from "./UsersTable";
 import SendAllButton from "./SendAllButton";
 import { Card, CardContent } from "@/components/ui/card";
+import { Money } from "@/components/Money";
+import { PageHeader } from "@/components/PageHeader";
 
 export default async function AdminBalances() {
   const session = await getServerSession(authOptions);
@@ -41,27 +43,29 @@ export default async function AdminBalances() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Member Balances</h1>
-          <p className="text-sm text-muted-foreground">
-            View and manage all participants&apos; current balances
-          </p>
-        </div>
-        <SendAllButton
-          userIds={users
-            .filter((u) => (u.balance ?? 0) < 0)
-            .map((u) => u.id)}
-        />
-      </header>
+      <PageHeader
+        title="Member balances"
+        description="View and manage all participants' current balances"
+        actions={
+          <SendAllButton
+            userIds={users.filter((u) => (u.balance ?? 0) < 0).map((u) => u.id)}
+          />
+        }
+      />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Stat label="Total Members" value={stats.totalUsers} />
-        <Stat label="Total Balance" value={formatBDT(stats.totalBalance)} />
-        <Stat label="Average Balance" value={formatBDT(stats.averageBalance)} />
+        <Stat label="Total members" value={stats.totalUsers} />
         <Stat
-          label="Negative Balances"
+          label="Total balance"
+          value={<Money amount={stats.totalBalance} tone="sign" />}
+        />
+        <Stat
+          label="Average balance"
+          value={<Money amount={stats.averageBalance} tone="sign" />}
+        />
+        <Stat
+          label="Negative balances"
           value={stats.negativeBalances}
           tone={stats.negativeBalances > 0 ? "danger" : undefined}
         />
@@ -90,7 +94,7 @@ function Stat({
         </div>
         <div
           className={`mt-1 text-xl font-semibold tabular-nums sm:text-2xl ${
-            tone === "danger" ? "text-rose-600" : ""
+            tone === "danger" ? "text-destructive" : ""
           }`}
         >
           {value}
@@ -98,16 +102,4 @@ function Stat({
       </CardContent>
     </Card>
   );
-}
-
-function formatBDT(n: number) {
-  try {
-    return new Intl.NumberFormat("en-BD", {
-      style: "currency",
-      currency: "BDT",
-      maximumFractionDigits: 2,
-    }).format(n);
-  } catch {
-    return `${n.toFixed(2)}৳`;
-  }
 }

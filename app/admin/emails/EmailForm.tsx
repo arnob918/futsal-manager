@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { sendEmailAction } from "@/app/(actions)/emailActions";
-import { Check, Loader2, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
+
+import { sendEmailAction } from "@/app/(actions)/emailActions";
+import { Money } from "@/components/Money";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 type User = {
   id: string;
@@ -18,18 +26,31 @@ export default function EmailForm({ users }: { users: User[] }) {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const negativeBalanceUsers = users.filter((u) => u.balance < 0);
+  const negativeBalanceUsers = useMemo(
+    () => users.filter((u) => u.balance < 0),
+    [users]
+  );
+
+  const allNegativeSelected =
+    negativeBalanceUsers.length > 0 &&
+    negativeBalanceUsers.every((u) => selectedUsers.includes(u.id));
+
+  const filteredUsers = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(
+      (u) =>
+        u.name?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+    );
+  }, [users, searchTerm]);
 
   const handleSelectAllNegative = () => {
     const ids = negativeBalanceUsers.map((u) => u.id);
-    const allSelected = ids.every((id) => selectedUsers.includes(id));
-    if (allSelected) {
+    if (allNegativeSelected) {
       setSelectedUsers(selectedUsers.filter((id) => !ids.includes(id)));
     } else {
-      const newSelected = new Set([...selectedUsers, ...ids]);
-      setSelectedUsers(Array.from(newSelected));
+      setSelectedUsers(Array.from(new Set([...selectedUsers, ...ids])));
     }
   };
 
@@ -40,12 +61,6 @@ export default function EmailForm({ users }: { users: User[] }) {
         : [...prev, userId]
     );
   };
-
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +85,7 @@ export default function EmailForm({ users }: { users: User[] }) {
       } else {
         toast.error(result.error);
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setIsSending(false);
@@ -78,130 +93,109 @@ export default function EmailForm({ users }: { users: User[] }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground">Recipients</label>
-        
-        <div className="flex flex-wrap gap-2 mb-2">
-          {selectedUsers.length > 0 && (
-            <span className="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2">
-              {selectedUsers.length} selected
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={handleSelectAllNegative}
-            className="inline-flex items-center justify-center rounded-md text-xs font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-muted hover:text-foreground h-8 px-3"
-          >
-            {negativeBalanceUsers.every((u) => selectedUsers.includes(u.id))
-              ? "Deselect Negative Balance Users"
-              : `Select All Negative Balance Users (${negativeBalanceUsers.length})`}
-          </button>
+    <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label>Recipients</Label>
+          <div className="flex items-center gap-2">
+            {selectedUsers.length > 0 && (
+              <Badge variant="secondary">
+                {selectedUsers.length} selected
+              </Badge>
+            )}
+            {negativeBalanceUsers.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSelectAllNegative}
+              >
+                {allNegativeSelected
+                  ? "Deselect negative balances"
+                  : `Select negative balances (${negativeBalanceUsers.length})`}
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="relative">
-          <div
-            className="flex min-h-[40px] w-full items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
-            <span>
-              {selectedUsers.length === 0
-                ? "Select users..."
-                : `${selectedUsers.length} users selected`}
-            </span>
+        {/* An inline list rather than a dropdown: the recipient set is the main
+            decision on this screen, so it shouldn't hide behind an overlay. */}
+        <div className="rounded-md border">
+          <div className="border-b p-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                className="pl-9"
+                placeholder="Search users…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
 
-          {isDropdownOpen && (
-            <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-card py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-              <div className="px-2 py-2 sticky top-0 bg-card border-b border-border">
-                <input
-                  type="text"
-                  className="h-11 w-full rounded-md border border-border bg-background px-3 text-base focus:border-ring focus:outline-none sm:h-9 sm:text-sm"
-                  placeholder="Search users..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-              {filteredUsers.length === 0 ? (
-                <div className="relative cursor-default select-none py-2 px-4 text-foreground">
-                  No user found.
-                </div>
-              ) : (
-                filteredUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="relative cursor-pointer select-none py-2 pl-10 pr-4 text-foreground hover:bg-muted"
-                    onClick={() => toggleUser(user.id)}
-                  >
-                    <span
-                      className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                        selectedUsers.includes(user.id)
-                          ? "text-muted-foreground"
-                          : "invisible"
-                      }`}
-                    >
-                      <Check className="h-4 w-4" />
+          <div className="max-h-64 overflow-y-auto p-1">
+            {filteredUsers.length === 0 ? (
+              <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                No user found.
+              </p>
+            ) : (
+              filteredUsers.map((user) => (
+                <label
+                  key={user.id}
+                  htmlFor={`recipient-${user.id}`}
+                  className="flex cursor-pointer items-center gap-3 rounded-sm px-2 py-2 transition-colors hover:bg-accent"
+                >
+                  <Checkbox
+                    id={`recipient-${user.id}`}
+                    checked={selectedUsers.includes(user.id)}
+                    onCheckedChange={() => toggleUser(user.id)}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">
+                      {user.name || "Unnamed"}
                     </span>
-                    <div className="flex flex-col">
-                      <span className="font-medium block truncate">
-                        {user.name || "Unnamed"}
-                      </span>
-                      <span className="text-xs text-muted-foreground block truncate">
-                        {user.email} • Balance: {user.balance}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-sm font-medium">
+                    <Money amount={user.balance} tone="sign" />
+                  </span>
+                </label>
+              ))
+            )}
+          </div>
         </div>
-        {isDropdownOpen && (
-          <div
-            className="fixed inset-0 z-0"
-            onClick={() => setIsDropdownOpen(false)}
-          />
-        )}
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="subject" className="text-sm font-medium text-foreground">
-          Subject
-        </label>
-        <input
+        <Label htmlFor="subject">Subject</Label>
+        <Input
           id="subject"
           required
-          className="flex h-11 w-full rounded-md border border-border bg-card px-3 py-2 text-base sm:h-10 sm:text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          placeholder="e.g. Outstanding Balance Reminder"
+          placeholder="e.g. Outstanding balance reminder"
         />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="message" className="text-sm font-medium text-foreground">
-          Message
-        </label>
-        <textarea
+        <Label htmlFor="message">Message</Label>
+        <Textarea
           id="message"
           required
           rows={6}
-          className="flex w-full rounded-md border border-border bg-card px-3 py-2 text-base sm:text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Enter your message here..."
+          placeholder="Enter your message here…"
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={isSending}
-        className="inline-flex h-11 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-      >
-        {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Send Emails
-      </button>
+      <Button type="submit" disabled={isSending} className="w-full sm:w-auto">
+        {isSending && <Loader2 className="size-4 animate-spin" />}
+        {isSending ? "Sending…" : "Send emails"}
+      </Button>
     </form>
   );
 }

@@ -3,34 +3,52 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { BkashAccordion } from "./BkashAccordion";
-import { BankAccordion } from "./BankAccordion";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
-type FundRequest = {
-  id: string;
-  amount: number;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  note: string | null;
-  createdAt: string; // ISO
-};
+import { PaymentDetails } from "./PaymentDetails";
+import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  TransactionLedger,
+  type FundRequest,
+  type Transaction,
+} from "@/components/TransactionLedger";
 
-type Transaction = {
-  id: string;
-  amount: number;
-  memo: string | null;
-  createdAt: string; // ISO
-  kind:
-    | "GENERIC"
-    | "FUND_TOPUP"
-    | "MATCH_PAYER_CREDIT"
-    | "MATCH_PARTICIPANT_DEBIT";
-  matchId: string | null;
-  match: {
-    id: string;
-    date: string;
-    location: string | null;
-  } | null;
-};
+const formSchema = z.object({
+  amount: z
+    .string()
+    .min(1, "Enter an amount.")
+    .refine((v) => Number.isFinite(Number(v)) && Number(v) > 0, {
+      message: "Must be a positive amount.",
+    }),
+  channel: z.string().min(1, "Select a payment method."),
+  userNote: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 export default function FundsView({
   action,
@@ -44,439 +62,152 @@ export default function FundsView({
   channels: string[];
 }) {
   const router = useRouter();
-  const [amount, setAmount] = React.useState<string>("");
-  const [channel, setChannel] = React.useState<string>("");
-  const [userNote, setUserNote] = React.useState<string>("");
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { amount: "", channel: "", userNote: "" },
+  });
 
-  const [pending, setPending] = React.useState(false);
-  const [successMsg, setSuccessMsg] = React.useState<string>("");
-  const [errorMsg, setErrorMsg] = React.useState<string>("");
+  async function onSubmit(values: FormValues) {
+    const formData = new FormData();
+    formData.set("amount", values.amount);
+    formData.set("channel", values.channel);
+    formData.set("userNote", values.userNote ?? "");
 
-  // client-side handler that calls the server action
-  async function handleSubmit(formData: FormData) {
-    setErrorMsg("");
-    setSuccessMsg("");
-    setPending(true);
     try {
       const res = await action(formData);
-      // treat undefined as success too
-      if (!res || (res as any).ok) {
-        // reset inputs
-        setAmount("");
-        setChannel("");
-        setUserNote("");
-        // refresh requests list
+      if (!res || res.ok) {
+        form.reset();
         router.refresh();
-        // show success message briefly
-        setSuccessMsg("Request submitted successfully.");
-        setTimeout(() => setSuccessMsg(""), 2500);
+        toast.success("Request submitted", {
+          description: "The admin will approve it once payment is received.",
+        });
       }
     } catch (e: any) {
-      setErrorMsg(e?.message || "Something went wrong while submitting.");
-    } finally {
-      setPending(false);
+      toast.error("Couldn't submit the request", {
+        description: e?.message || "Something went wrong while submitting.",
+      });
     }
   }
 
+  const pending = form.formState.isSubmitting;
+
   return (
-    <div className="mt-12 mb-12 flex flex-col items-center">
-      <div className="space-y-5 max-w-5xl w-full">
-        <header className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Add Funds</h1>
-            <p className="text-sm text-muted-foreground">
-              Request to add money to your balance. Amount and payment method
-              are required.
-            </p>
-          </div>
-        </header>
+    <div className="space-y-6">
+      <PageHeader
+        title="Add funds"
+        description="Request to add money to your balance. Amount and payment method are required."
+      />
 
-        {/* Alerts */}
-        {successMsg && (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            {successMsg}
-          </div>
-        )}
-        {errorMsg && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-            {errorMsg}
-          </div>
-        )}
-
-        {/* Form Card */}
-        <div className="relative rounded-xl border p-4 sm:p-6">
-          {/* Loader overlay */}
-          {pending && (
-            <div className="absolute inset-0 z-10 grid place-items-center rounded-xl bg-background/60 backdrop-blur-sm">
-              <div className="flex items-center gap-2 text-sm">
-                <Spinner />
-                <span>Submitting…</span>
-              </div>
-            </div>
-          )}
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit(new FormData(e.currentTarget));
-            }}
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2"
-          >
-            {/* Amount (required) */}
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">
-                Amount (BDT) <span className="text-red-500">*</span>
-              </span>
-              <input
-                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
-                name="amount"
-                placeholder="e.g., 1500"
-                type="number"
-                step="0.01"
-                min="0.01"
-                required
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-              <span className="text-xs text-muted-foreground">
-                Must be a positive amount.
-              </span>
-            </label>
-
-            {/* Channel (required) */}
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">
-                Payment Method <span className="text-red-500">*</span>
-              </span>
-              <select
-                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
-                name="channel"
-                required
-                value={channel}
-                onChange={(e) => setChannel(e.target.value)}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <Card>
+          <CardContent>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="grid gap-4 sm:grid-cols-2"
               >
-                <option value="" disabled>
-                  Select a method…
-                </option>
-                {channels.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <span className="text-xs text-muted-foreground">
-                Choose one: Bank, Bkash, Cash or Other.
-              </span>
-            </label>
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount (BDT)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0.01"
+                          placeholder="e.g. 1500"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Must be a positive amount.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Optional Note */}
-            <label className="col-span-1 sm:col-span-2 flex flex-col gap-1">
-              <span className="text-sm font-medium">Optional note</span>
-              <textarea
-                className="min-h-[84px] rounded-lg border bg-background px-3 py-2 text-base sm:text-sm"
-                name="userNote"
-                placeholder="Account details, transaction ID, sender name, etc."
-                value={userNote}
-                onChange={(e) => setUserNote(e.target.value)}
-              />
-            </label>
-
-            {/* Submit */}
-            <div className="col-span-1 sm:col-span-2 flex items-center justify-end gap-3 pt-1">
-              <button
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 sm:h-10 sm:w-auto"
-                type="submit"
-                disabled={pending || !amount || Number(amount) <= 0 || !channel}
-                title={
-                  pending
-                    ? "Submitting…"
-                    : !amount || Number(amount) <= 0 || !channel
-                      ? "Fill required fields"
-                      : "Submit request"
-                }
-              >
-                {pending && <Spinner />}
-                {pending ? "Submitting…" : "Request"}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Transaction Ledger */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold">My Transaction History</h2>
-
-          {initialTransactions.length === 0 && initialRequests.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No transaction history yet.
-            </p>
-          ) : (
-            <div className="hidden md:block overflow-x-auto rounded-xl border">
-              <table className="w-full min-w-full divide-y divide-border">
-                <thead className="bg-muted">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                    >
-                      Date
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                    >
-                      Description
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-right text-xs font-medium  uppercase tracking-wider text-amber-600"
-                    >
-                      Request
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-right text-xs font-medium  uppercase tracking-wider text-green-600"
-                    >
-                      Credit
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-4 py-3 text-right text-xs font-medium  uppercase tracking-wider text-red-600"
-                    >
-                      Debit
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-card divide-y divide-border">
-                  {/* Combine and sort transactions and requests by date */}
-                  {[
-                    ...initialTransactions.map((t) => ({
-                      id: t.id,
-                      date: new Date(t.createdAt),
-                      description: getTransactionDescription(t),
-                      amount: t.amount,
-                      isTransaction: true,
-                      status: null,
-                      item: t,
-                    })),
-                    ...initialRequests.map((r) => ({
-                      id: r.id,
-                      date: new Date(r.createdAt),
-                      description: r.note || "Fund request",
-                      amount: r.amount,
-                      isTransaction: false,
-                      status: r.status,
-                      item: r,
-                    })),
-                  ]
-                    .sort((a, b) => b.date.getTime() - a.date.getTime())
-                    .map((item, index) => (
-                      <tr
-                        key={item.id}
-                        className={index % 2 === 0 ? "bg-card" : "bg-muted"}
+                <FormField
+                  control={form.control}
+                  name="channel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment method</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
                       >
-                        <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
-                          {prettyDateTime(item.date)}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-foreground">
-                          {item.description}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-right text-amber-600">
-                          {!item.isTransaction ? formatTaka(item.amount) : "—"}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-right text-green-600">
-                          {item.isTransaction && item.amount > 0
-                            ? formatTaka(item.amount)
-                            : "—"}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-right text-red-600">
-                          {item.isTransaction && item.amount < 0
-                            ? formatTaka(Math.abs(item.amount))
-                            : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a method…" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {channels.map((c) => (
+                            <SelectItem key={c} value={c}>
+                              {c}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        How you sent (or will send) the money.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          {/* Mobile View - Card-based ledger for small screens */}
-          <div className="md:hidden space-y-3 mt-4">
-            {[
-              ...initialTransactions.map((t) => ({
-                id: t.id,
-                date: new Date(t.createdAt),
-                description: getTransactionDescription(t),
-                amount: t.amount,
-                isTransaction: true,
-                status: null,
-                item: t,
-              })),
-              ...initialRequests.map((r) => ({
-                id: r.id,
-                date: new Date(r.createdAt),
-                description: r.note || "Fund request",
-                amount: r.amount,
-                isTransaction: false,
-                status: r.status,
-                item: r,
-              })),
-            ]
-              .sort((a, b) => b.date.getTime() - a.date.getTime())
-              .map((item) => (
-                <article key={item.id} className="rounded-xl border p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div
-                        className={`text-sm font-semibold ${
-                          !item.isTransaction
-                            ? "text-amber-600"
-                            : item.amount > 0
-                              ? "text-green-600"
-                              : "text-red-600"
-                        }`}
-                      >
-                        {formatTaka(item.amount)}
-                      </div>
-                      <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                        {item.description}
-                      </div>
-                    </div>
-                    <div>
-                      {item.isTransaction ? (
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            item.amount > 0
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {item.amount > 0 ? "Credit" : "Debit"}
-                        </span>
-                      ) : (
-                        <StatusPill status={item.status} />
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    {prettyDateTime(item.date)}
-                  </div>
-                </article>
-              ))}
-          </div>
-        </section>
+                <FormField
+                  control={form.control}
+                  name="userNote"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>Note (optional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          rows={3}
+                          placeholder="Account details, transaction ID, sender name, etc."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="sm:col-span-2 sm:flex sm:justify-end">
+                  <Button
+                    type="submit"
+                    disabled={pending}
+                    className="w-full sm:w-auto"
+                  >
+                    {pending && <Loader2 className="size-4 animate-spin" />}
+                    {pending ? "Submitting…" : "Request funds"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        <PaymentDetails />
       </div>
-      <div className="fixed bottom-3 left-3 right-3 z-50 flex items-end gap-2 sm:bottom-4 sm:left-auto sm:right-4 sm:w-auto">
-        <BkashAccordion bkashNumber="01875782911" />
-        <BankAccordion
-          bankName="Prime Bank"
-          accountNumber="2165215017043"
-          accountHolder="Md. Shoriful Islam"
-          branchName="Bashundhara Branch"
-        />
-      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Transaction history</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TransactionLedger
+            transactions={initialTransactions}
+            requests={initialRequests}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
-}
-
-function Spinner() {
-  return (
-    <span
-      className="inline-block size-4 animate-spin rounded-full border-[2px] border-muted-foreground border-t-transparent"
-      aria-hidden="true"
-    />
-  );
-}
-
-function StatusPill({
-  status,
-}: {
-  status: "PENDING" | "APPROVED" | "REJECTED" | null;
-}) {
-  const map = {
-    PENDING: {
-      cls: "bg-amber-50 text-amber-700 border-amber-200",
-      dot: "bg-amber-500",
-      label: "Pending",
-    },
-    APPROVED: {
-      cls: "bg-amber-50 text-amber-700 border-amber-200",
-      dot: "bg-amber-500",
-      label: "Approved",
-    },
-    REJECTED: {
-      cls: "bg-amber-50 text-amber-700 border-amber-200",
-      dot: "bg-amber-500",
-      label: "Rejected",
-    },
-  } as const;
-
-  const s = map[status || "PENDING"];
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-xs ${s.cls}`}
-    >
-      <span className={`size-1.5 rounded-full ${s.dot}`} />
-      {s.label}
-    </span>
-  );
-}
-
-function prettyDateTime(d: Date) {
-  const datePart = new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(d);
-  const timePart = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
-  return `${datePart} • ${timePart}`;
-}
-
-function formatTaka(amount: number) {
-  try {
-    return new Intl.NumberFormat("en-BD", {
-      style: "currency",
-      currency: "BDT",
-      maximumFractionDigits: 2,
-    }).format(amount);
-  } catch {
-    return `${amount.toFixed(2)}৳`;
-  }
-}
-
-function getTransactionDescription(transaction: Transaction): string {
-  switch (transaction.kind) {
-    case "FUND_TOPUP":
-      return transaction.memo || "Fund added to account";
-    case "MATCH_PAYER_CREDIT":
-      return transaction.match
-        ? `Credit for match on ${formatDate(new Date(transaction.match.date))}${
-            transaction.match.location
-              ? ` at ${transaction.match.location}`
-              : ""
-          }`
-        : "Match payment credit";
-    case "MATCH_PARTICIPANT_DEBIT":
-      return transaction.match
-        ? `Match fee for ${formatDate(new Date(transaction.match.date))}${
-            transaction.match.location
-              ? ` at ${transaction.match.location}`
-              : ""
-          }`
-        : "Match participation fee";
-    default:
-      return transaction.memo || "Transaction";
-  }
-}
-
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
 }

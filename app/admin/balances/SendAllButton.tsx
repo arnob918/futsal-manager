@@ -28,7 +28,7 @@ export default function SendAllButton({ userIds }: { userIds: string[] }) {
       } else {
         toast.error(result.error);
       }
-    } catch (error) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setIsSending(false);
@@ -41,11 +41,12 @@ export default function SendAllButton({ userIds }: { userIds: string[] }) {
     <>
       <Button
         onClick={() => setIsOpen(true)}
+        variant="destructive"
         // Full width on phones so the label never overflows the button box.
-        className="h-11 w-full bg-rose-600 text-white hover:bg-rose-700 sm:h-9 sm:w-auto"
+        className="h-11 w-full sm:h-9 sm:w-auto"
       >
         <Mail className="size-4" />
-        <span className="truncate">Send Reminder to All ({userIds.length})</span>
+        <span className="truncate">Send reminder to all ({userIds.length})</span>
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -67,9 +68,10 @@ export default function SendAllButton({ userIds }: { userIds: string[] }) {
               Cancel
             </Button>
             <Button
+              variant="destructive"
               onClick={handleSend}
               disabled={isSending}
-              className="h-11 bg-rose-600 text-white hover:bg-rose-700 sm:h-9"
+              className="h-11 sm:h-9"
             >
               {isSending && <Loader2 className="size-4 animate-spin" />}
               Send Emails

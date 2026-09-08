@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import EmailForm from "./EmailForm";
+import { PageHeader } from "@/components/PageHeader";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function AdminEmails() {
   const session = await getServerSession(authOptions);
@@ -21,17 +23,17 @@ export default async function AdminEmails() {
   });
 
   return (
-    <div className="space-y-6 p-6 mt-12">
-      <header>
-        <h1 className="text-2xl font-semibold">Email Notifications</h1>
-        <p className="text-sm text-muted-foreground">
-          Send email notifications to users.
-        </p>
-      </header>
+    <div className="space-y-6">
+      <PageHeader
+        title="Email notifications"
+        description="Send email notifications to users."
+      />
 
-      <div className="bg-card p-6 rounded-lg border shadow-sm">
-        <EmailForm users={users} />
-      </div>
+      <Card>
+        <CardContent>
+          <EmailForm users={users} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
