@@ -29,7 +29,7 @@ export default async function AdminEmails() {
         </p>
       </header>
 
-      <div className="bg-white p-6 rounded-lg border shadow-sm">
+      <div className="bg-card p-6 rounded-lg border shadow-sm">
         <EmailForm users={users} />
       </div>
     </div>

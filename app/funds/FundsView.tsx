@@ -128,7 +128,7 @@ export default function FundsView({
                 Amount (BDT) <span className="text-red-500">*</span>
               </span>
               <input
-                className="rounded-lg border px-3 py-2 text-sm"
+                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
                 name="amount"
                 placeholder="e.g., 1500"
                 type="number"
@@ -149,7 +149,7 @@ export default function FundsView({
                 Payment Method <span className="text-red-500">*</span>
               </span>
               <select
-                className="rounded-lg border px-3 py-2 text-sm"
+                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
                 name="channel"
                 required
                 value={channel}
@@ -173,7 +173,7 @@ export default function FundsView({
             <label className="col-span-1 sm:col-span-2 flex flex-col gap-1">
               <span className="text-sm font-medium">Optional note</span>
               <textarea
-                className="min-h-[84px] rounded-lg border px-3 py-2 text-sm"
+                className="min-h-[84px] rounded-lg border bg-background px-3 py-2 text-base sm:text-sm"
                 name="userNote"
                 placeholder="Account details, transaction ID, sender name, etc."
                 value={userNote}
@@ -184,7 +184,7 @@ export default function FundsView({
             {/* Submit */}
             <div className="col-span-1 sm:col-span-2 flex items-center justify-end gap-3 pt-1">
               <button
-                className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 sm:h-10 sm:w-auto"
                 type="submit"
                 disabled={pending || !amount || Number(amount) <= 0 || !channel}
                 title={
@@ -212,18 +212,18 @@ export default function FundsView({
             </p>
           ) : (
             <div className="hidden md:block overflow-x-auto rounded-xl border">
-              <table className="w-full min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="w-full min-w-full divide-y divide-border">
+                <thead className="bg-muted">
                   <tr>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                     >
                       Date
                     </th>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                     >
                       Description
                     </th>
@@ -247,7 +247,7 @@ export default function FundsView({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card divide-y divide-border">
                   {/* Combine and sort transactions and requests by date */}
                   {[
                     ...initialTransactions.map((t) => ({
@@ -273,12 +273,12 @@ export default function FundsView({
                     .map((item, index) => (
                       <tr
                         key={item.id}
-                        className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                        className={index % 2 === 0 ? "bg-card" : "bg-muted"}
                       >
-                        <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
+                        <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
                           {prettyDateTime(item.date)}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
+                        <td className="px-4 py-3 text-sm text-foreground">
                           {item.description}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-right text-amber-600">

@@ -4,6 +4,15 @@ import { useState } from "react";
 import { sendNegativeBalanceEmailAction } from "@/app/(actions)/emailActions";
 import { Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function SendAllButton({ userIds }: { userIds: string[] }) {
   const [isSending, setIsSending] = useState(false);
@@ -30,42 +39,44 @@ export default function SendAllButton({ userIds }: { userIds: string[] }) {
 
   return (
     <>
-      <button
+      <Button
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-rose-600 text-white hover:bg-rose-700 h-9 px-4 py-2"
+        // Full width on phones so the label never overflows the button box.
+        className="h-11 w-full bg-rose-600 text-white hover:bg-rose-700 sm:h-9 sm:w-auto"
       >
-        <Mail className="mr-2 h-4 w-4" />
-        Send Reminder to All ({userIds.length})
-      </button>
+        <Mail className="size-4" />
+        <span className="truncate">Send Reminder to All ({userIds.length})</span>
+      </Button>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
-            <h2 className="text-lg font-semibold mb-2">Are you sure?</h2>
-            <p className="text-sm text-slate-600 mb-6">
-              This will send an email reminder to {userIds.length} users with a
-              negative balance.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsOpen(false)}
-                disabled={isSending}
-                className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-md"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSend}
-                disabled={isSending}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-md disabled:opacity-50"
-              >
-                {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Send Emails
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Are you sure?</DialogTitle>
+            <DialogDescription>
+              This will send an email reminder to {userIds.length}{" "}
+              {userIds.length === 1 ? "user" : "users"} with a negative balance.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => setIsOpen(false)}
+              disabled={isSending}
+              className="h-11 sm:h-9"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSend}
+              disabled={isSending}
+              className="h-11 bg-rose-600 text-white hover:bg-rose-700 sm:h-9"
+            >
+              {isSending && <Loader2 className="size-4 animate-spin" />}
+              Send Emails
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

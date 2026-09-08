@@ -56,7 +56,7 @@ export default async function AdminFunds() {
                       className="rounded-full"
                     />
                   ) : (
-                    <div className="rounded-full bg-gray-100 w-11 h-11 grid place-items-center text-sm font-medium text-gray-700">
+                    <div className="rounded-full bg-muted w-11 h-11 grid place-items-center text-sm font-medium text-foreground">
                       {(r.user?.name || r.user?.email || "?")
                         .split(" ")
                         .map((s: string) => s?.[0])
@@ -73,27 +73,29 @@ export default async function AdminFunds() {
                   <div className="text-xs text-muted-foreground">
                     {r.user?.email}
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">{r.note}</div>
-                  <div className="text-xs text-gray-400 mt-2">
+                  <div className="text-sm text-muted-foreground mt-1">{r.note}</div>
+                  <div className="text-xs text-muted-foreground mt-2">
                     Requested: {prettyDate(new Date(r.createdAt))}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 mt-3 sm:mt-0">
-                <div className="text-right">
-                  <div className="text-lg font-semibold">
+              <div className="flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-center sm:border-0 sm:pt-0">
+                {/* Phone: amount reads as a labelled row. Desktop: right-aligned block. */}
+                <div className="flex items-baseline justify-between gap-2 sm:block sm:shrink-0 sm:text-right">
+                  <span className="text-xs text-muted-foreground sm:hidden">
+                    Amount
+                  </span>
+                  <div className="text-lg font-semibold tabular-nums">
                     {formatBDT(r.amount)}
                   </div>
-                  <div className="text-xs text-muted-foreground">Amount</div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <div>
-                    {/* Client-side action buttons that call API routes and refresh the page */}
-                    <ActionButtons id={r.id} />
+                  <div className="hidden text-xs text-muted-foreground sm:block">
+                    Amount
                   </div>
                 </div>
+
+                {/* Client-side action buttons that call API routes and refresh the page */}
+                <ActionButtons id={r.id} />
               </div>
             </li>
           ))}

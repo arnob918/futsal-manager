@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import UsersTable from "./UsersTable";
 import SendAllButton from "./SendAllButton";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function AdminBalances() {
   const session = await getServerSession(authOptions);
@@ -39,8 +40,8 @@ export default async function AdminBalances() {
   };
 
   return (
-    <div className="space-y-6 p-6 mt-12">
-      <header className="flex justify-between items-center">
+    <div className="space-y-6">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Member Balances</h1>
           <p className="text-sm text-muted-foreground">
@@ -55,42 +56,47 @@ export default async function AdminBalances() {
       </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">
-            Total Members
-          </div>
-          <div className="mt-1 text-2xl font-semibold">{stats.totalUsers}</div>
-        </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">
-            Total Balance
-          </div>
-          <div className="mt-1 text-2xl font-semibold">
-            {formatBDT(stats.totalBalance)}
-          </div>
-        </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">
-            Average Balance
-          </div>
-          <div className="mt-1 text-2xl font-semibold">
-            {formatBDT(stats.averageBalance)}
-          </div>
-        </div>
-        <div className="rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">
-            Negative Balances
-          </div>
-          <div className="mt-1 text-2xl font-semibold">
-            {stats.negativeBalances}
-          </div>
-        </div>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <Stat label="Total Members" value={stats.totalUsers} />
+        <Stat label="Total Balance" value={formatBDT(stats.totalBalance)} />
+        <Stat label="Average Balance" value={formatBDT(stats.averageBalance)} />
+        <Stat
+          label="Negative Balances"
+          value={stats.negativeBalances}
+          tone={stats.negativeBalances > 0 ? "danger" : undefined}
+        />
       </div>
 
       {/* Interactive table */}
       <UsersTable initialUsers={users} />
     </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: React.ReactNode;
+  tone?: "danger";
+}) {
+  return (
+    <Card className="gap-0 py-4">
+      <CardContent className="px-4">
+        <div className="text-xs font-medium text-muted-foreground sm:text-sm">
+          {label}
+        </div>
+        <div
+          className={`mt-1 text-xl font-semibold tabular-nums sm:text-2xl ${
+            tone === "danger" ? "text-rose-600" : ""
+          }`}
+        >
+          {value}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

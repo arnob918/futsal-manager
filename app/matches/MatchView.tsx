@@ -173,7 +173,7 @@ export default function MatchesView({
             Upcoming: {upcoming.length}
           </span>
           <span className="inline-flex items-center gap-1 rounded-full border px-2 py-1">
-            <span className="size-2 rounded-full bg-slate-400" />
+            <span className="size-2 rounded-full bg-muted-foreground/50" />
             Past: {past.length}
           </span>
         </div>
@@ -188,7 +188,7 @@ export default function MatchesView({
               Year
             </span>
             <select
-              className="rounded-lg border px-3 py-2 text-sm"
+              className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
               value={year}
               onChange={(e) =>
                 setYear(
@@ -211,7 +211,7 @@ export default function MatchesView({
               Month
             </span>
             <select
-              className="rounded-lg border px-3 py-2 text-sm"
+              className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
               value={month}
               onChange={(e) =>
                 setMonth(
@@ -237,7 +237,7 @@ export default function MatchesView({
               Day
             </span>
             <select
-              className="rounded-lg border px-3 py-2 text-sm"
+              className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
               value={day}
               onChange={(e) =>
                 setDay(
@@ -286,7 +286,7 @@ export default function MatchesView({
 
       <section className="space-y-2">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="size-2 rounded-full bg-slate-400" />
+          <span className="size-2 rounded-full bg-muted-foreground/50" />
           Past
         </h2>
         {past.length === 0 ? (

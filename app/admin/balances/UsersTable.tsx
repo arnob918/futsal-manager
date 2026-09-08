@@ -3,6 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
+import { Loader2, Mail } from "lucide-react";
+import { toast } from "sonner";
+import { sendNegativeBalanceEmailAction } from "@/app/(actions)/emailActions";
 
 type User = {
   id: string;
@@ -16,6 +19,15 @@ type User = {
 
 type SortField = "name" | "email" | "matches" | "transactions" | "balance";
 type SortDir = "asc" | "desc";
+
+const SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: "name:asc", label: "Name (A–Z)" },
+  { value: "name:desc", label: "Name (Z–A)" },
+  { value: "balance:asc", label: "Balance (low → high)" },
+  { value: "balance:desc", label: "Balance (high → low)" },
+  { value: "matches:desc", label: "Most matches" },
+  { value: "transactions:desc", label: "Most transactions" },
+];
 
 export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   const [query, setQuery] = React.useState("");
@@ -73,25 +85,92 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
 
   return (
     <div className="space-y-4">
-      {/* Search */}
-      <div className="flex justify-between gap-4">
+      {/* Search + count. Stacks on phones so neither element gets squeezed. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by name or email..."
-            className="w-full rounded-lg border px-3 py-2 pl-9 text-sm"
+            // text-base avoids iOS Safari zooming the page on focus
+            className="h-11 w-full rounded-lg border bg-background px-3 py-2 pl-9 text-base sm:h-10 sm:text-sm"
           />
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         </div>
-        <div className="text-sm text-muted-foreground">
-          {users.length} {users.length === 1 ? "member" : "members"}
+
+        <div className="flex items-center justify-between gap-3 sm:justify-end">
+          <span className="text-sm text-muted-foreground">
+            {users.length} {users.length === 1 ? "member" : "members"}
+          </span>
+          {/* The sortable table headers are hidden on mobile, so offer sorting here. */}
+          <select
+            aria-label="Sort members"
+            value={`${sortField}:${sortDir}`}
+            onChange={(e) => {
+              const [f, d] = e.target.value.split(":");
+              setSortField(f as SortField);
+              setSortDir(d as SortDir);
+            }}
+            className="h-11 rounded-lg border bg-background px-2 text-sm md:hidden"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-lg border">
+      {/* Mobile: cards. A 6-column table is unusable at 375px. */}
+      <div className="space-y-2 md:hidden">
+        {users.map((user) => {
+          const negative = (user.balance ?? 0) < 0;
+          return (
+            <div key={user.id} className="rounded-lg border p-3">
+              <div className="flex items-start gap-3">
+                <MemberAvatar user={user} />
+                <Link
+                  href={`/admin/balances/${user.id}`}
+                  className="min-w-0 flex-1"
+                >
+                  <div className="truncate font-medium">
+                    {user.name ?? "Unnamed"}
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {user.email ?? "—"}
+                  </div>
+                </Link>
+                {negative && <SendReminderButton userId={user.id} />}
+              </div>
+
+              <div className="mt-3 flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
+                <span>{user.participations.length} matches</span>
+                <span>{user.transactions.length} txns</span>
+                <span
+                  className={
+                    negative
+                      ? "font-medium text-rose-600"
+                      : "font-medium text-foreground"
+                  }
+                >
+                  {formatBDT(user.balance ?? 0)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+
+        {users.length === 0 && (
+          <p className="rounded-lg border py-6 text-center text-sm text-muted-foreground">
+            No members found.
+          </p>
+        )}
+      </div>
+
+      {/* Desktop: full table */}
+      <div className="hidden rounded-lg border md:block">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -150,26 +229,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                   <td className="py-3 px-4">
                     <Link href={`/admin/balances/${user.id}`}>
                       <div className="flex items-center gap-3">
-                        <div className="shrink-0">
-                          {user.image ? (
-                            <Image
-                              src={user.image}
-                              alt={user.name ?? user.email ?? "User"}
-                              width={32}
-                              height={32}
-                              className="rounded-full"
-                            />
-                          ) : (
-                            <div className="grid size-8 place-items-center rounded-full bg-muted text-xs font-medium">
-                              {(user.name || user.email || "?")
-                                .split(" ")
-                                .map((s) => s?.[0])
-                                .slice(0, 2)
-                                .join("")
-                                .toUpperCase()}
-                            </div>
-                          )}
-                        </div>
+                        <MemberAvatar user={user} />
                         <div className="min-w-0 flex-1">
                           <div className="truncate font-medium">
                             {user.name ?? "Unnamed"}
@@ -222,6 +282,30 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   );
 }
 
+function MemberAvatar({ user }: { user: User }) {
+  if (user.image) {
+    return (
+      <Image
+        src={user.image}
+        alt={user.name ?? user.email ?? "User"}
+        width={32}
+        height={32}
+        className="size-8 shrink-0 rounded-full"
+      />
+    );
+  }
+  return (
+    <div className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-xs font-medium">
+      {(user.name || user.email || "?")
+        .split(" ")
+        .map((s) => s?.[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()}
+    </div>
+  );
+}
+
 function SortHeader({
   field,
   current,
@@ -240,7 +324,9 @@ function SortHeader({
   const active = current === field;
   return (
     <th
-      className={`py-3 px-4 text-${align} text-sm font-medium text-muted-foreground`}
+      className={`py-3 px-4 text-sm font-medium text-muted-foreground ${
+        align === "right" ? "text-right" : "text-left"
+      }`}
     >
       <button
         type="button"
@@ -285,10 +371,6 @@ function formatBDT(n: number) {
   }
 }
 
-import { sendNegativeBalanceEmailAction } from "@/app/(actions)/emailActions";
-import { Loader2, Mail } from "lucide-react";
-import { toast } from "sonner";
-
 function SendReminderButton({ userId }: { userId: string }) {
   const [isSending, setIsSending] = React.useState(false);
 
@@ -313,9 +395,14 @@ function SendReminderButton({ userId }: { userId: string }) {
       onClick={handleSend}
       disabled={isSending}
       title="Send Reminder Email"
-      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-slate-100 h-8 w-8 text-rose-600"
+      aria-label="Send reminder email"
+      className="inline-flex size-10 shrink-0 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-rose-600 md:size-8"
     >
-      {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+      {isSending ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : (
+        <Mail className="size-4" />
+      )}
     </button>
   );
 }

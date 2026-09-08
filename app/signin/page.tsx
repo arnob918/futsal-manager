@@ -5,15 +5,15 @@ import football from "@/public/football.svg";
 
 export default function SignIn() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50 px-4">
+    <div className="flex min-h-[calc(100dvh-10rem)] items-center justify-center bg-gradient-to-br from-blue-50 via-background to-green-50 px-4 dark:from-blue-950/30 dark:to-green-950/30">
       <div className="max-w-5xl w-full grid md:grid-cols-2 gap-12 items-center">
         {/* Left side - Content */}
         <div className="space-y-6 text-center md:text-left order-2 md:order-1">
           <div className="space-y-3">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
               Penalty Merchants
             </h1>
-            <p className="text-xl text-gray-600 leading-relaxed">
+            <p className="text-xl text-muted-foreground leading-relaxed">
               The field where football meets brotherhood.
             </p>
           </div>
@@ -35,7 +35,7 @@ export default function SignIn() {
                   />
                 </svg>
               </div>
-              <p className="text-gray-700">
+              <p className="text-foreground">
                 Organize matches and track player attendance
               </p>
             </div>
@@ -55,7 +55,7 @@ export default function SignIn() {
                   />
                 </svg>
               </div>
-              <p className="text-gray-700">
+              <p className="text-foreground">
                 Automatic cost splitting and balance tracking
               </p>
             </div>
@@ -75,7 +75,7 @@ export default function SignIn() {
                   />
                 </svg>
               </div>
-              <p className="text-gray-700">
+              <p className="text-foreground">
                 Simple fund management for your group
               </p>
             </div>
@@ -83,7 +83,7 @@ export default function SignIn() {
 
           <div className="pt-6">
             <button
-              className="w-full md:w-auto group relative inline-flex items-center justify-center gap-3 bg-white border-2 border-gray-300 rounded-lg px-8 py-4 text-base font-semibold text-gray-700 shadow-sm hover:shadow-md hover:border-gray-400 transition-all duration-200 hover:-translate-y-0.5"
+              className="w-full md:w-auto group relative inline-flex items-center justify-center gap-3 bg-card border-2 border-border rounded-lg px-8 py-4 text-base font-semibold text-foreground shadow-sm hover:shadow-md hover:border-border transition-all duration-200 hover:-translate-y-0.5"
               onClick={() => signIn("google", { callbackUrl: "/" })}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -108,7 +108,7 @@ export default function SignIn() {
             </button>
           </div>
 
-          {/* <p className="text-sm text-gray-500 pt-2">
+          {/* <p className="text-sm text-muted-foreground pt-2">
             By signing in, you agree to our Terms of Service and Privacy Policy
           </p> */}
         </div>

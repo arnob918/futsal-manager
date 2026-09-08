@@ -64,7 +64,7 @@ export default function FundsView({
                 {userBalance ?? 0} BDT
               </p>
             </div>
-            <div className="bg-white/20 p-4 rounded-xl backdrop-blur-sm">
+            <div className="bg-card/20 p-4 rounded-xl backdrop-blur-sm">
               <TrendingUp className="w-8 h-8" />
             </div>
           </div>
@@ -78,18 +78,18 @@ export default function FundsView({
             </p>
           ) : (
             <div className="hidden md:block overflow-x-auto rounded-xl border">
-              <table className="w-full min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="w-full min-w-full divide-y divide-border">
+                <thead className="bg-muted">
                   <tr>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                     >
                       Date
                     </th>
                     <th
                       scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                     >
                       Description
                     </th>
@@ -113,7 +113,7 @@ export default function FundsView({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card divide-y divide-border">
                   {/* Combine and sort transactions and requests by date */}
                   {[
                     ...initialTransactions.map((t) => ({
@@ -139,12 +139,12 @@ export default function FundsView({
                     .map((item, index) => (
                       <tr
                         key={item.id}
-                        className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                        className={index % 2 === 0 ? "bg-card" : "bg-muted"}
                       >
-                        <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
+                        <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
                           {prettyDateTime(item.date)}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
+                        <td className="px-4 py-3 text-sm text-foreground">
                           {item.description}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-right text-amber-600">

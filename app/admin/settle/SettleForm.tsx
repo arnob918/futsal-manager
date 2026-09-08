@@ -149,7 +149,7 @@ export default function SettleForm({
   }
 
   return (
-    <div className="mt-10 flex justify-center px-3">
+    <div className="flex justify-center px-3">
       <div className="w-full max-w-5xl space-y-5">
         <header className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -197,7 +197,7 @@ export default function SettleForm({
             <label className="flex flex-col gap-1">
               <span className="text-sm font-medium">Match (past)</span>
               <select
-                className="rounded-lg border px-3 py-2 text-sm"
+                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
                 name="matchId"
                 required
                 value={matchId}
@@ -220,7 +220,7 @@ export default function SettleForm({
             <label className="flex flex-col gap-1">
               <span className="text-sm font-medium">Total Cost (BDT)</span>
               <input
-                className="rounded-lg border px-3 py-2 text-sm"
+                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
                 name="totalBDT"
                 type="number"
                 step="0.01"
@@ -260,7 +260,7 @@ export default function SettleForm({
                 </div>
               </div>
               <input
-                className="rounded-lg border px-3 py-2 text-sm"
+                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
                 placeholder="Type name or email…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -276,17 +276,17 @@ export default function SettleForm({
                   <div
                     key={u.id}
                     className={`flex flex-col gap-2 rounded-lg border p-2 text-sm transition hover:shadow-sm ${
-                      checked ? "border-emerald-300 bg-emerald-50" : ""
+                      checked ? "border-primary bg-primary/10" : ""
                     }`}
                   >
-                    <label className="flex items-center cursor-pointer">
+                    <label className="flex cursor-pointer items-center py-1.5">
                       <input
                         type="checkbox"
                         name="participants"
                         value={u.id}
                         checked={checked}
                         onChange={() => toggleUser(u.id)}
-                        className="mr-2 align-middle"
+                        className="mr-3 size-5 shrink-0 accent-primary"
                       />
                       <div className="flex-1">
                         <span className="font-medium">
@@ -340,7 +340,7 @@ export default function SettleForm({
             {/* Submit */}
             <div className="flex items-center justify-end">
               <button
-                className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 sm:h-10 sm:w-auto"
                 type="submit"
                 disabled={pending}
                 title={pending ? "Settling…" : "Settle"}

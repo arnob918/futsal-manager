@@ -7,8 +7,9 @@ import { authOptions } from "@/lib/auth";
 import Image from "next/image";
 import SignInButton from "./signin/sign-in-btn";
 import NextTopLoader from "nextjs-toploader";
+import BottomNav from "@/components/BottomNav";
 
-import { Metadata } from "next";
+import { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
   title: "Penalty Merchants",
@@ -28,6 +29,15 @@ export const metadata: Metadata = {
   },
 };
 
+// viewportFit: "cover" lets env(safe-area-inset-*) resolve to real values,
+// which the fixed top nav and bottom tab bar rely on once installed as a PWA.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#10B981",
+};
+
 const inter = Inter({ subsets: ["latin"] });
 
 export default async function RootLayout({
@@ -42,120 +52,107 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <nav className="fixed top-0 left-0 right-0 bg-white border-b px-4 py-3 flex gap-2 sm:gap-4 items-center z-50">
-          <NextTopLoader color="#10B981" height={3} showSpinner={false} />
-          <Link
-            href="/"
-            className="font-semibold hover:text-blue-600 transition-colors"
-          >
-            Home
-          </Link>
-          {session ? (
-            <>
-              <Link
-                href="/matches"
-                className=" hover:text-blue-600 transition-colors"
-              >
-                Matches
-              </Link>
-              {role !== "ADMIN" && (
-                <Link
-                  href="/funds"
-                  className=" hover:text-blue-600 transition-colors"
-                >
-                  Funds
-                </Link>
-              )}
-              <Link
-                href="/about"
-                className=" hover:text-blue-600 transition-colors"
-              >
-                About
-              </Link>
+      <body className={`${inter.className} min-h-dvh bg-muted/30 text-foreground`}>
+        <NextTopLoader color="#10B981" height={3} showSpinner={false} />
 
-              {/* Mobile menu */}
-              {/* <div className="sm:hidden ml-auto relative group">
-                <button className="px-3 py-1 border rounded hover:bg-gray-50">
-                  Menu
-                </button>
-                <div className="hidden group-focus-within:block absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
+        <nav className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pt-[env(safe-area-inset-top)]">
+          <div className="flex h-14 items-center gap-2 px-4 sm:gap-4">
+            <Link
+              href="/"
+              className="font-semibold tracking-tight hover:text-primary transition-colors"
+            >
+              Penalty Merchants
+            </Link>
+
+            {session ? (
+              <>
+                {/* Desktop links — on mobile these live in the bottom tab bar */}
+                <div className="hidden md:flex md:items-center md:gap-4">
                   <Link
                     href="/dashboard"
-                    className="block px-4 py-2 hover:bg-gray-100"
+                    className="hover:text-primary transition-colors"
                   >
-                    Dashboard
+                    Home
                   </Link>
                   <Link
                     href="/matches"
-                    className="block px-4 py-2 hover:bg-gray-100"
+                    className="hover:text-primary transition-colors"
                   >
                     Matches
                   </Link>
-                  <Link
-                    href="/funds"
-                    className="block px-4 py-2 hover:bg-gray-100"
-                  >
-                    Funds
-                  </Link>
+                  {role !== "ADMIN" && (
+                    <Link
+                      href="/funds"
+                      className="hover:text-primary transition-colors"
+                    >
+                      Funds
+                    </Link>
+                  )}
                   {role === "ADMIN" && (
                     <Link
                       href="/admin"
-                      className="block px-4 py-2 hover:bg-gray-100"
+                      className="hover:text-primary transition-colors"
                     >
                       Admin
                     </Link>
                   )}
+                  <Link
+                    href="/about"
+                    className="hover:text-primary transition-colors"
+                  >
+                    About
+                  </Link>
                 </div>
-              </div> */}
 
-              {/* Profile dropdown */}
-              <div className="ml-auto sm:ml-auto relative group">
-                <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                  {image ? (
-                    <Image
-                      src={image}
-                      alt={name || "Profile"}
-                      width={36}
-                      height={36}
-                      className="rounded-full border-2 border-gray-200"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-gray-300 flex items-center justify-center border-2 border-gray-200">
-                      <span className="text-gray-600 font-semibold text-sm">
-                        {name?.charAt(0).toUpperCase() || "U"}
-                      </span>
-                    </div>
-                  )}
-                </button>
-                <div className="hidden group-focus-within:block absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
-                  {name && (
-                    <div className="px-4 py-2 border-b text-sm font-semibold text-gray-700">
-                      {name}
-                    </div>
-                  )}
-                  <form action="/api/auth/signout" method="post">
-                    <button
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
-                      type="submit"
-                    >
-                      Sign out
-                    </button>
-                  </form>
+                {/* Desktop profile dropdown — mobile uses the "Me" drawer */}
+                <div className="ml-auto relative group hidden md:block">
+                  <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                    {image ? (
+                      <Image
+                        src={image}
+                        alt={name || "Profile"}
+                        width={36}
+                        height={36}
+                        className="rounded-full border-2 border-border"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                        <span className="text-muted-foreground font-semibold text-sm">
+                          {name?.charAt(0).toUpperCase() || "U"}
+                        </span>
+                      </div>
+                    )}
+                  </button>
+                  <div className="hidden group-focus-within:block absolute right-0 mt-2 w-48 bg-popover text-popover-foreground border rounded-lg shadow-lg z-50">
+                    {name && (
+                      <div className="px-4 py-2 border-b text-sm font-semibold">
+                        {name}
+                      </div>
+                    )}
+                    <form action="/api/auth/signout" method="post">
+                      <button
+                        className="w-full text-left px-4 py-2 hover:bg-accent text-destructive rounded-b-lg"
+                        type="submit"
+                      >
+                        Sign out
+                      </button>
+                    </form>
+                  </div>
                 </div>
-              </div>
-            </>
-          ) : (
-            <SignInButton />
-            // <Link
-            //   className="ml-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-            //   href="/signin"
-            // >
-            //   Sign in
-            // </Link>
-          )}
+
+              </>
+            ) : (
+              <SignInButton />
+            )}
+          </div>
         </nav>
-        <main className="mx-auto p-4 sm:p-6">{children}</main>
+
+        {/* Top offset clears the fixed nav; bottom offset clears the tab bar. */}
+        <main className="mx-auto p-4 pt-[calc(3.5rem+1rem+env(safe-area-inset-top))] pb-[calc(3.5rem+1rem+env(safe-area-inset-bottom))] sm:p-6 sm:pt-[calc(3.5rem+1.5rem+env(safe-area-inset-top))] md:pb-6">
+          {children}
+        </main>
+
+        {session && <BottomNav role={role} name={name} image={image} />}
         <Toaster />
       </body>
     </html>

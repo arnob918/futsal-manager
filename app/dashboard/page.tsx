@@ -55,14 +55,13 @@ export default async function Dashboard() {
     user?.participations.map((p) => p.matchId) || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8 mt-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-slate-200">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
+        <div className="bg-card rounded-2xl shadow-sm p-4 sm:p-6 md:p-8 border border-border">
+          <h1 className="text-2xl font-bold sm:text-3xl md:text-4xl text-foreground mb-2">
             Welcome{user?.name ? `, ${user.name}` : ""}
           </h1>
-          <p className="text-slate-600">
+          <p className="text-muted-foreground">
             Here's your match overview and balance
           </p>
         </div>
@@ -84,7 +83,7 @@ export default async function Dashboard() {
                 {user?.balance ?? 0} BDT
               </p>
             </div>
-            <div className="bg-white/20 p-4 rounded-xl backdrop-blur-sm">
+            <div className="bg-card/20 p-4 rounded-xl backdrop-blur-sm">
               <TrendingUp className="w-8 h-8" />
             </div>
           </div>
@@ -93,22 +92,22 @@ export default async function Dashboard() {
         {/* Two Column Layout for Matches */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-start">
           {/* Upcoming Matches */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-fit">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-slate-200">
+          <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden h-fit">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-border">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-600" />
-                <h2 className="text-xl font-bold text-slate-900">
+                <h2 className="text-xl font-bold text-foreground">
                   Upcoming Matches
                 </h2>
               </div>
-              <p className="text-slate-600 mt-1 text-xs">
+              <p className="text-muted-foreground mt-1 text-xs">
                 Next matches scheduled
               </p>
             </div>
 
             <div className="p-4">
               {upcoming.length === 0 ? (
-                <p className="text-slate-500 text-center py-8 text-sm">
+                <p className="text-muted-foreground text-center py-8 text-sm">
                   No upcoming matches scheduled
                 </p>
               ) : (
@@ -123,14 +122,14 @@ export default async function Dashboard() {
                         className={`border rounded-lg p-3 transition-all hover:shadow-md ${
                           isParticipating
                             ? "border-blue-200 bg-blue-50/50"
-                            : "border-slate-200 bg-white"
+                            : "border-border bg-card"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="space-y-1 flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <Clock className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                              <span className="font-semibold text-slate-900 text-sm truncate">
+                              <Clock className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                              <span className="font-semibold text-foreground text-sm truncate">
                                 {new Date(match.date).toLocaleDateString(
                                   "en-US",
                                   {
@@ -144,15 +143,15 @@ export default async function Dashboard() {
                             </div>
                             {match.location && (
                               <div className="flex items-center gap-2">
-                                <MapPin className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                                <span className="text-slate-600 text-xs truncate">
+                                <MapPin className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                                <span className="text-muted-foreground text-xs truncate">
                                   {match.location}
                                 </span>
                               </div>
                             )}
                             <div className="flex items-center gap-2">
-                              <Users className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                              <span className="text-slate-600 text-xs">
+                              <Users className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                              <span className="text-muted-foreground text-xs">
                                 {match.participants.length} participant
                                 {match.participants.length !== 1 ? "s" : ""}
                               </span>
@@ -161,8 +160,8 @@ export default async function Dashboard() {
                           <div className="flex flex-col items-end gap-1 flex-shrink-0">
                             {match.totalCost > 0 && (
                               <div className="text-right">
-                                <p className="text-xs text-slate-500">Cost</p>
-                                <p className="text-sm font-bold text-slate-900">
+                                <p className="text-xs text-muted-foreground">Cost</p>
+                                <p className="text-sm font-bold text-foreground">
                                   {match.totalCost} BDT
                                 </p>
                               </div>
@@ -184,22 +183,22 @@ export default async function Dashboard() {
           </div>
 
           {/* Match History */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden h-fit">
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 border-b border-slate-200">
+          <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden h-fit">
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 border-b border-border">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-purple-600" />
-                <h2 className="text-xl font-bold text-slate-900">
+                <h2 className="text-xl font-bold text-foreground">
                   Match History
                 </h2>
               </div>
-              <p className="text-slate-600 mt-1 text-xs">
+              <p className="text-muted-foreground mt-1 text-xs">
                 Your past matches and costs
               </p>
             </div>
 
             <div className="p-4">
               {pastMatches.length === 0 ? (
-                <p className="text-slate-500 text-center py-8 text-sm">
+                <p className="text-muted-foreground text-center py-8 text-sm">
                   No match history yet
                 </p>
               ) : (
@@ -229,15 +228,15 @@ export default async function Dashboard() {
                         key={match.id}
                         className={`border rounded-lg p-3 hover:shadow-md transition-all ${
                           participated
-                            ? "border-slate-200 bg-white"
-                            : "border-slate-200 bg-slate-50/50"
+                            ? "border-border bg-card"
+                            : "border-border bg-muted/50"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="space-y-1 flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <Calendar className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                              <span className="font-semibold text-slate-900 text-sm truncate">
+                              <Calendar className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                              <span className="font-semibold text-foreground text-sm truncate">
                                 {new Date(match.date).toLocaleDateString(
                                   "en-US",
                                   {
@@ -250,22 +249,22 @@ export default async function Dashboard() {
                             </div>
                             {match.location && (
                               <div className="flex items-center gap-2">
-                                <MapPin className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                                <span className="text-slate-600 text-xs truncate">
+                                <MapPin className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                                <span className="text-muted-foreground text-xs truncate">
                                   {match.location}
                                 </span>
                               </div>
                             )}
                             <div className="flex items-center gap-2">
-                              <Users className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                              <span className="text-slate-600 text-xs">
+                              <Users className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                              <span className="text-muted-foreground text-xs">
                                 {match.participants.length} participant
                                 {match.participants.length !== 1 ? "s" : ""}
                               </span>
                             </div>
                             {participated && (
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-slate-500">
+                                <span className="text-xs text-muted-foreground">
                                   Guests: {userParticipant?.guests || 0}
                                 </span>
                               </div>
@@ -275,7 +274,7 @@ export default async function Dashboard() {
                             {participated ? (
                               <>
                                 <div className="text-right">
-                                  <p className="text-xs text-slate-500">
+                                  <p className="text-xs text-muted-foreground">
                                     Your Share
                                   </p>
                                   <p className="text-sm font-bold text-emerald-600">
@@ -295,7 +294,7 @@ export default async function Dashboard() {
                                 )}
                               </>
                             ) : (
-                              <span className="inline-flex items-center gap-1 bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium">
+                              <span className="inline-flex items-center gap-1 bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs font-medium">
                                 Not Participated
                               </span>
                             )}
@@ -310,6 +309,5 @@ export default async function Dashboard() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

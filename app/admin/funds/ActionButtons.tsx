@@ -28,12 +28,12 @@ export default function ActionButtons({ id }: { id: string }) {
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2">
+    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
       <button
         type="button"
         disabled={pending}
         onClick={() => runAction("/api/admin/funds/approve")}
-        className="w-full sm:w-auto px-3 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+        className="h-11 w-full rounded bg-primary px-3 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 sm:h-10 sm:w-auto"
       >
         {pending ? "Working…" : "Approve"}
       </button>
@@ -41,7 +41,7 @@ export default function ActionButtons({ id }: { id: string }) {
         type="button"
         disabled={pending}
         onClick={() => runAction("/api/admin/funds/reject")}
-        className="w-full sm:w-auto px-3 py-2 rounded border border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+        className="h-11 w-full rounded border border-rose-200 px-3 text-rose-700 transition-colors hover:bg-rose-50 disabled:opacity-50 sm:h-10 sm:w-auto"
       >
         {pending ? "Working…" : "Reject"}
       </button>

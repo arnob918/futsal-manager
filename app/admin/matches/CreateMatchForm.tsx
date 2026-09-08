@@ -105,7 +105,7 @@ export default function CreateMatchForm({
                 Date &amp; time <span className="text-red-500">*</span>
               </span>
               <input
-                className="rounded-lg border px-3 py-2 text-sm"
+                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
                 type="datetime-local"
                 name="date"
                 required
@@ -122,7 +122,7 @@ export default function CreateMatchForm({
             <label className="flex flex-col gap-1">
               <span className="text-sm font-medium">Location (optional)</span>
               <input
-                className="rounded-lg border px-3 py-2 text-sm"
+                className="h-11 rounded-lg border bg-background px-3 text-base sm:h-10 sm:text-sm"
                 name="location"
                 placeholder="e.g., Sports Arena"
                 value={location}

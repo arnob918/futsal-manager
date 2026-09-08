@@ -82,7 +82,7 @@ export default function EmailSender({ users }: { users: User[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-card p-6 rounded-lg shadow">
         <h2 className="text-xl font-semibold mb-4">Select Users</h2>
         <div className="flex gap-2 mb-4">
           <button
@@ -93,13 +93,13 @@ export default function EmailSender({ users }: { users: User[] }) {
           </button>
           <button
             onClick={selectAllUsers}
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+            className="px-3 py-1 text-sm bg-muted text-foreground rounded hover:bg-muted"
           >
             Select All
           </button>
           <button
             onClick={clearSelection}
-            className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700"
+            className="px-3 py-1 text-sm text-muted-foreground hover:text-foreground"
           >
             Clear
           </button>
@@ -107,13 +107,13 @@ export default function EmailSender({ users }: { users: User[] }) {
         
         <div className="max-h-60 overflow-y-auto border rounded p-2">
           {users.map((user) => (
-            <div key={user.id} className="flex items-center gap-2 py-1 hover:bg-gray-50">
+            <div key={user.id} className="flex items-center gap-2 py-1 hover:bg-muted">
               <input
                 type="checkbox"
                 id={`user-${user.id}`}
                 checked={selectedUserIds.has(user.id)}
                 onChange={() => toggleUser(user.id)}
-                className="rounded border-gray-300"
+                className="rounded border-border"
               />
               <label htmlFor={`user-${user.id}`} className="flex-1 cursor-pointer flex justify-between text-sm">
                 <span>{user.name || user.email}</span>
@@ -124,30 +124,30 @@ export default function EmailSender({ users }: { users: User[] }) {
             </div>
           ))}
         </div>
-        <p className="text-sm text-gray-500 mt-2">
+        <p className="text-sm text-muted-foreground mt-2">
           Selected: {selectedUserIds.size} users
         </p>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow space-y-4">
+      <div className="bg-card p-6 rounded-lg shadow space-y-4">
         <h2 className="text-xl font-semibold">Compose Email</h2>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Subject</label>
           <input
             type="text"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="w-full border rounded-md p-2"
+            className="w-full rounded-md border bg-background p-2 text-base sm:text-sm"
             placeholder="Important Notification"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Message</label>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={6}
-            className="w-full border rounded-md p-2"
+            className="w-full rounded-md border bg-background p-2 text-base sm:text-sm"
             placeholder="Write your message here..."
           />
         </div>
@@ -161,7 +161,7 @@ export default function EmailSender({ users }: { users: User[] }) {
         <button
           onClick={handleSend}
           disabled={isSending}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-11 w-full rounded bg-primary px-4 text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSending ? "Sending..." : "Send Emails"}
         </button>

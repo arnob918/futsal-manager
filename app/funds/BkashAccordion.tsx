@@ -81,15 +81,15 @@ export function BkashAccordion({
 
       {/* Accordion Content */}
       <div
-        className={`overflow-hidden rounded-b-xl bg-white shadow-lg transition-all duration-200 ${
+        className={`overflow-hidden rounded-b-xl bg-card shadow-lg transition-all duration-200 ${
           isOpen ? "max-h-[500px] border-x border-b" : "max-h-0"
         }`}
       >
         <div className="p-3 space-y-3 sm:p-4 sm:space-y-4">
           {/* Instructions */}
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-foreground">
             <p className="font-medium mb-1 text-sm">Send money to:</p>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               Open bKash app and send money to this number
             </p>
           </div>
@@ -103,7 +103,7 @@ export function BkashAccordion({
             </div>
             <button
               onClick={handleCopy}
-              className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg border border-pink-200 bg-white hover:bg-pink-50 transition-colors active:scale-95"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg border border-pink-200 bg-card hover:bg-pink-50 transition-colors active:scale-95"
               type="button"
               title={copied ? "Copied!" : "Copy number"}
             >
@@ -116,12 +116,12 @@ export function BkashAccordion({
           </div>
 
           {/* QR Code */}
-          <div className="hidden sm:flex flex-col border-t pt-3 sm:pt-4">
-            <p className="text-xs text-gray-600 mb-2 text-center">
+          <div className="hidden sm:flex border-t pt-3 sm:pt-4">
+            <p className="text-xs text-muted-foreground mb-2 text-center">
               Or scan QR code in bKash app
             </p>
             <div className="flex justify-center">
-              <div className="rounded-lg border-2 border-pink-200 p-2 bg-white">
+              <div className="rounded-lg border-2 border-pink-200 p-2 bg-card">
                 <Image
                   src={qrCodePath}
                   alt="bKash QR Code"
