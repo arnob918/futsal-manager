@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { History, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/PageHeader";
@@ -28,6 +28,19 @@ function toLocalDatetimeInputValue(d: Date) {
   const hh = pad(d.getHours());
   const mi = pad(d.getMinutes());
   return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
+function formatDatetime(value: string) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 function Chip({
@@ -62,7 +75,10 @@ export default function CreateMatchForm({
   const [location, setLocation] = React.useState("");
   const [pending, setPending] = React.useState(false);
 
-  const minDateStr = toLocalDatetimeInputValue(new Date());
+  const isPast = React.useMemo(() => {
+    const d = new Date(date);
+    return !Number.isNaN(d.getTime()) && d.getTime() < Date.now();
+  }, [date]);
 
   async function handleSubmit(formData: FormData) {
     setPending(true);
@@ -93,11 +109,18 @@ export default function CreateMatchForm({
     setDate(toLocalDatetimeInputValue(d));
   }
 
+  function setLastNight8pm() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    d.setHours(20, 0, 0, 0);
+    setDate(toLocalDatetimeInputValue(d));
+  }
+
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <PageHeader
         title="New match"
-        description="Schedule a match. Players see it on their dashboard right away."
+        description="Schedule a match, or backdate one that's already been played."
       />
 
       <Card>
@@ -116,14 +139,24 @@ export default function CreateMatchForm({
                 type="datetime-local"
                 name="date"
                 required
-                min={minDateStr}
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
               />
               <div className="flex flex-wrap gap-2 pt-1">
                 <Chip onClick={setTonight}>Tonight (+2h)</Chip>
                 <Chip onClick={setTomorrow8pm}>Tomorrow 8:00 PM</Chip>
+                <Chip onClick={setLastNight8pm}>Yesterday 8:00 PM</Chip>
               </div>
+              {isPast && (
+                <div className="flex items-start gap-2 rounded-md border border-dashed bg-muted/50 p-3 text-sm text-muted-foreground">
+                  <History className="mt-0.5 size-4 shrink-0" />
+                  <p>
+                    This match is dated in the past (
+                    {formatDatetime(date)}). It won&apos;t show as upcoming —
+                    it&apos;ll go straight to the settle list.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="grid gap-2">
