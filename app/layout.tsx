@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import SignInButton from "./signin/sign-in-btn";
 import NextTopLoader from "nextjs-toploader";
 import BottomNav from "@/components/BottomNav";
+import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,6 +28,7 @@ export const metadata: Metadata = {
   description: "Manage your futsal matches and funds easily.",
   icons: {
     icon: "/favicon.png",
+    apple: "/icons/apple-touch-icon.png",
   },
   openGraph: {
     images: [
@@ -166,6 +168,36 @@ export default async function RootLayout({
           </main>
 
           {session && <BottomNav role={role} name={name} image={image} />}
+
+          {/*
+            Installability is offered to signed-in users only, which keeps the
+            install prompt away from casual visitors during the beta. React 19
+            hoists these into <head>, so the async layout needs no <head> JSX.
+
+            This is why the manifest is a static file rather than app/manifest.ts
+            — the file convention emits <link rel="manifest"> on every page
+            unconditionally. Note it suppresses the prompt, not installation:
+            Chrome's "Install page as app" menu item and iOS's Add to Home Screen
+            still work on any site.
+          */}
+          {session && (
+            <>
+              <link rel="manifest" href="/manifest.webmanifest" />
+              <meta name="mobile-web-app-capable" content="yes" />
+              <meta name="apple-mobile-web-app-capable" content="yes" />
+              {/*
+                "default", not "black-translucent": the latter forces white
+                status-bar text in both themes, which is unreadable against the
+                light-mode #ffffff header.
+              */}
+              <meta
+                name="apple-mobile-web-app-status-bar-style"
+                content="default"
+              />
+              <meta name="apple-mobile-web-app-title" content="Penalty" />
+              <ServiceWorkerRegistrar />
+            </>
+          )}
           <Toaster />
         </ThemeProvider>
       </body>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Offline · Penalty Merchants</title>
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#252525" />
+    <!--
+      Deliberately self-contained: no Next.js chunks, no external CSS, no webfont.
+      Those all live at build-hashed URLs this page can't know, and anything it
+      references has to survive being served from the service worker cache with
+      no network. The brand tokens below are duplicated from app/globals.css.
+
+      Consequence: this page follows the OS colour scheme rather than the user's
+      next-themes choice. That's the price of a screen guaranteed to render.
+    -->
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #252525;
+        --muted: #737373;
+        --accent: #10b981;
+        --accent-fg: #ffffff;
+        --border: #e5e5e5;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #252525;
+          --fg: #fafafa;
+          --muted: #a1a1a1;
+          --accent: #34d9a2;
+          --accent-fg: #252525;
+          --border: #404040;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: calc(1.5rem + env(safe-area-inset-top)) calc(1.5rem + env(safe-area-inset-right))
+          calc(1.5rem + env(safe-area-inset-bottom)) calc(1.5rem + env(safe-area-inset-left));
+        background: var(--bg);
+        color: var(--fg);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        text-align: center;
+      }
+      .card {
+        max-width: 22rem;
+        width: 100%;
+      }
+      .mark {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 1.25rem;
+        display: block;
+        opacity: 0.9;
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      p {
+        margin: 0 0 1.75rem;
+        color: var(--muted);
+        font-size: 0.9375rem;
+        line-height: 1.5;
+      }
+      button {
+        width: 100%;
+        min-height: 2.75rem;
+        padding: 0 1rem;
+        border: 1px solid var(--border);
+        border-radius: 0.625rem;
+        background: var(--accent);
+        color: var(--accent-fg);
+        font: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button:active {
+        opacity: 0.85;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img class="mark" src="/icons/icon-192.png" alt="" width="72" height="72" />
+      <h1>You're offline</h1>
+      <p>
+        Penalty Merchants needs a connection to load your matches and balances.
+        Reconnect and this page will pick things back up.
+      </p>
+      <button type="button" onclick="location.reload()">Try again</button>
+    </div>
+    <script>
+      // Recover on its own the moment connectivity returns.
+      addEventListener("online", function () {
+        location.reload();
+      });
+    </script>
+  </body>
+</html>
